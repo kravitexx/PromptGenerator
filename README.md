@@ -41,7 +41,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 - `/src/app` - Next.js 14 App Router pages
 - `/src/components` - React components including shadcn/ui
-- `/middleware.ts` - Clerk authentication middleware
+- `/src/middleware.ts` - Clerk authentication middleware
 - `/.env.local` - Environment variables (not committed to git)
 
 ## Authentication Flow
