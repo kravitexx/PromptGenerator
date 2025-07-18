@@ -11,6 +11,7 @@ import { useApiKey } from '@/hooks/useApiKey';
 import { MessageRenderer } from '@/components/MessageRenderer';
 import { TypingIndicator } from '@/components/LoadingStates';
 import { ImageDropZone } from '@/components/ImageDropZone';
+import { PromptGenerator } from '@/components/PromptGenerator';
 import { 
   Send, 
   Bot, 
@@ -23,15 +24,17 @@ import {
 interface ChatWindowProps {
   onPromptGenerated?: (prompt: GeneratedPrompt) => void;
   className?: string;
+  showPromptGenerator?: boolean;
 }
 
-export function ChatWindow({ onPromptGenerated, className }: ChatWindowProps) {
+export function ChatWindow({ onPromptGenerated, className, showPromptGenerator = true }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [showImageDropZone, setShowImageDropZone] = useState(false);
+  const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -82,6 +85,11 @@ export function ChatWindow({ onPromptGenerated, className }: ChatWindowProps) {
 
       setMessages(prev => [...prev, assistantMessage]);
       
+      // Update current prompt for the generator
+      if (result.generatedPrompt) {
+        setCurrentPrompt(result.generatedPrompt as GeneratedPrompt);
+      }
+      
       // Notify parent component about the generated prompt
       if (onPromptGenerated && result.generatedPrompt) {
         onPromptGenerated(result.generatedPrompt as GeneratedPrompt);
@@ -116,6 +124,12 @@ export function ChatWindow({ onPromptGenerated, className }: ChatWindowProps) {
     setError(null);
     setImages([]);
     setShowImageDropZone(false);
+    setCurrentPrompt(null);
+  };
+
+  const handlePromptUpdate = (updatedPrompt: GeneratedPrompt) => {
+    setCurrentPrompt(updatedPrompt);
+    onPromptGenerated?.(updatedPrompt);
   };
 
   const handleImagesChange = (newImages: string[]) => {
@@ -249,6 +263,16 @@ export function ChatWindow({ onPromptGenerated, className }: ChatWindowProps) {
             <span>{inputValue.length}/2000</span>
           </div>
         </div>
+
+        {/* Prompt Generator */}
+        {showPromptGenerator && currentPrompt && (
+          <div className="p-4 border-t bg-gray-50">
+            <PromptGenerator
+              prompt={currentPrompt}
+              onPromptUpdate={handlePromptUpdate}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
