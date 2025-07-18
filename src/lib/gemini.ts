@@ -296,28 +296,236 @@ export function createPromptGenerationRequest(
   userInput: string
 ): string {
   const systemPrompt = `
-You are an expert AI image prompt engineer. Your task is to help users create detailed, effective prompts for AI image generation.
+You are an expert AI image prompt engineer specializing in creating detailed, effective prompts for AI image generation models like Stable Diffusion, Midjourney, DALL-E, Imagen, and Flux.
 
-Given the user's input, create an improved prompt that follows the 7-slot scaffold structure:
-- Subject (S): The main subject or focus of the image
-- Context (C): Setting, environment, or background context  
-- Style (St): Art style, medium, or visual approach
-- Composition (Co): Camera angle, framing, and visual composition
-- Lighting (L): Lighting conditions and mood
-- Atmosphere (A): Mood, emotion, and atmospheric qualities
-- Quality (Q): Technical quality and rendering specifications
+Your task is to analyze the user's input and create an enhanced, comprehensive prompt using the 7-slot scaffold structure:
 
-Please analyze the user's input and provide:
-1. An enhanced prompt that fills in missing details
-2. Specific suggestions for each scaffold slot
-3. Alternative variations they might consider
+**SCAFFOLD STRUCTURE:**
+- **Subject (S)**: The main subject or focus of the image (people, objects, characters)
+- **Context (C)**: Setting, environment, location, or background context
+- **Style (St)**: Art style, medium, artistic approach, or visual technique
+- **Composition (Co)**: Camera angle, framing, perspective, and visual composition
+- **Lighting (L)**: Lighting conditions, mood lighting, time of day effects
+- **Atmosphere (A)**: Mood, emotion, feeling, and atmospheric qualities
+- **Quality (Q)**: Technical quality specifications and rendering details
 
-User input: "${userInput}"
+**ANALYSIS PROCESS:**
+1. Identify what elements are present in the user's input
+2. Determine what elements are missing or could be enhanced
+3. Fill in gaps with appropriate, complementary details
+4. Ensure the enhanced prompt is cohesive and well-balanced
 
-Please provide a comprehensive, detailed prompt that would work well with AI image generation models like Stable Diffusion, Midjourney, or DALL-E.
-`;
+**USER INPUT:** "${userInput}"
+
+**RESPONSE FORMAT:**
+Please provide a single, comprehensive enhanced prompt that incorporates all relevant scaffold elements. Make it detailed enough to produce high-quality results, but concise enough to be practical. Focus on:
+- Vivid, specific descriptions
+- Professional terminology where appropriate
+- Balanced detail across all scaffold elements
+- Compatibility with multiple AI image generation models
+
+Enhanced Prompt:`;
 
   return systemPrompt;
+}
+
+/**
+ * Creates a clarifying questions request for the Gemini API
+ */
+export function createClarifyingQuestionsRequest(
+  userInput: string,
+  currentScaffold?: string
+): string {
+  const questionsPrompt = `
+You are an AI prompt engineering assistant. Analyze the user's input and current prompt state to generate 3-5 clarifying questions that would help improve the image generation prompt.
+
+**USER INPUT:** "${userInput}"
+${currentScaffold ? `**CURRENT SCAFFOLD:** ${currentScaffold}` : ''}
+
+Focus on areas that are:
+1. Missing or vague in the current prompt
+2. Could benefit from more specific details
+3. Might have multiple valid interpretations
+4. Could enhance the visual impact
+
+Generate questions that are:
+- Specific and actionable
+- Easy to answer with concrete options
+- Focused on visual elements
+- Helpful for prompt improvement
+
+Please format your response as a JSON array of question objects:
+[
+  {
+    "id": "unique_id",
+    "question": "What specific art style would you prefer?",
+    "type": "select",
+    "options": ["Photorealistic", "Digital Art", "Oil Painting", "Watercolor"],
+    "category": "style"
+  }
+]
+
+Categories should be one of: "style", "lighting", "composition", "technical"
+Types should be one of: "text", "select", "multiselect"
+`;
+
+  return questionsPrompt;
+}
+
+/**
+ * Generates clarifying questions based on user input
+ */
+export async function generateClarifyingQuestions(
+  userInput: string,
+  apiKey: string,
+  currentScaffold?: string
+): Promise<unknown[]> {
+  if (!apiKey) {
+    throw new GeminiError('MISSING_API_KEY', 'API key is required');
+  }
+
+  try {
+    const questionsPrompt = createClarifyingQuestionsRequest(userInput, currentScaffold);
+
+    const response = await fetch(
+      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: questionsPrompt }]
+          }],
+          generationConfig: {
+            temperature: 0.4,
+            topK: 32,
+            topP: 0.8,
+            maxOutputTokens: 1024,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new GeminiError(
+        'API_ERROR',
+        errorData.error?.message || 'Failed to generate clarifying questions',
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    
+    if (!data.candidates || data.candidates.length === 0) {
+      return [];
+    }
+
+    const questionsText = data.candidates[0].content.parts[0].text;
+    
+    try {
+      // Try to parse JSON response
+      const questions = JSON.parse(questionsText);
+      return Array.isArray(questions) ? questions : [];
+    } catch {
+      // If JSON parsing fails, return empty array
+      return [];
+    }
+  } catch (error) {
+    if (error instanceof GeminiError) {
+      throw error;
+    }
+    
+    console.error('Clarifying questions generation error:', error);
+    return [];
+  }
+}
+
+/**
+ * Generates prompt suggestions based on user input
+ */
+export async function generatePromptSuggestions(
+  userInput: string,
+  apiKey: string
+): Promise<string[]> {
+  if (!apiKey) {
+    throw new GeminiError('MISSING_API_KEY', 'API key is required');
+  }
+
+  try {
+    const suggestionsPrompt = `
+Analyze this user input for an AI image generation prompt and provide 3-5 specific, actionable suggestions for improvement:
+
+**USER INPUT:** "${userInput}"
+
+Focus on suggestions that would:
+1. Add missing visual details
+2. Improve clarity and specificity
+3. Enhance the artistic quality
+4. Make the prompt more effective for AI generation
+
+Format your response as a simple JSON array of strings:
+["suggestion 1", "suggestion 2", "suggestion 3"]
+
+Each suggestion should be concise, specific, and actionable.
+`;
+
+    const response = await fetch(
+      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: suggestionsPrompt }]
+          }],
+          generationConfig: {
+            temperature: 0.5,
+            topK: 40,
+            topP: 0.9,
+            maxOutputTokens: 512,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new GeminiError(
+        'API_ERROR',
+        errorData.error?.message || 'Failed to generate suggestions',
+        errorData
+      );
+    }
+
+    const data = await response.json();
+    
+    if (!data.candidates || data.candidates.length === 0) {
+      return [];
+    }
+
+    const suggestionsText = data.candidates[0].content.parts[0].text;
+    
+    try {
+      // Try to parse JSON response
+      const suggestions = JSON.parse(suggestionsText);
+      return Array.isArray(suggestions) ? suggestions : [];
+    } catch {
+      // If JSON parsing fails, return empty array
+      return [];
+    }
+  } catch (error) {
+    if (error instanceof GeminiError) {
+      throw error;
+    }
+    
+    console.error('Suggestions generation error:', error);
+    return [];
+  }
 }
 
 /**
