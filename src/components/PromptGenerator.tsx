@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { GeneratedPrompt, ScaffoldSlot } from '@/types';
 import { PromptSwitcher } from '@/components/PromptSwitcher';
 import { ScaffoldDisplay } from '@/components/ScaffoldDisplay';
+import { PromptImprover } from '@/components/PromptImprover';
 import { updateGeneratedPrompt } from '@/lib/promptBuilder';
 import { 
   Wand2, 
@@ -44,6 +45,11 @@ export function PromptGenerator({
     } catch (error) {
       console.error('Failed to update prompt:', error);
     }
+  };
+
+  const handlePromptImprovement = (updatedPrompt: GeneratedPrompt) => {
+    setCurrentPrompt(updatedPrompt);
+    onPromptUpdate?.(updatedPrompt);
   };
 
   const handleTemplateChange = (templateId: string) => {
@@ -195,6 +201,12 @@ export function PromptGenerator({
         prompt={currentPrompt}
         onScaffoldUpdate={handleScaffoldUpdate}
         editable={true}
+      />
+
+      {/* Prompt Improver */}
+      <PromptImprover
+        prompt={currentPrompt}
+        onPromptUpdate={handlePromptImprovement}
       />
 
       {/* Template Switcher */}

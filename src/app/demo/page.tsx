@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { GeneratedPrompt } from '@/types';
 import { PromptGenerator } from '@/components/PromptGenerator';
 import { analyzeInputAndPopulateScaffold, createGeneratedPrompt } from '@/lib/promptBuilder';
+import { shouldShowClarifyingQuestions } from '@/lib/promptAnalysis';
 import { Wand2, Sparkles } from 'lucide-react';
 
 export default function DemoPage() {
@@ -153,6 +154,18 @@ export default function DemoPage() {
                   <p className="text-sm font-medium mb-1">Available Formats:</p>
                   <p className="text-xs text-gray-600">
                     {Object.keys(generatedPrompt.formattedOutputs).length} model templates ready
+                  </p>
+                </div>
+
+                <div className={`p-3 rounded ${shouldShowClarifyingQuestions(generatedPrompt) ? 'bg-yellow-50 border border-yellow-200' : 'bg-blue-50 border border-blue-200'}`}>
+                  <p className="text-sm font-medium mb-1">
+                    {shouldShowClarifyingQuestions(generatedPrompt) ? 'Improvement Available' : 'Quality Check'}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {shouldShowClarifyingQuestions(generatedPrompt) 
+                      ? 'Clarifying questions available to improve this prompt'
+                      : 'Prompt quality looks good'
+                    }
                   </p>
                 </div>
               </div>
