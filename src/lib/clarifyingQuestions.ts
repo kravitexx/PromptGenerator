@@ -269,7 +269,7 @@ export function getRelevantQuestions(missingSlots: string[]): ClarifyingQuestion
  * Processes answers from clarifying questions and suggests scaffold updates
  */
 export function processQuestionAnswers(
-  answers: Record<string, any>
+  answers: Record<string, unknown>
 ): Record<string, string> {
   const scaffoldUpdates: Record<string, string> = {};
   

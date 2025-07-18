@@ -1,4 +1,4 @@
-import { GeneratedPrompt, ScaffoldSlot, ModelTemplate } from '@/types';
+import { GeneratedPrompt, ScaffoldSlot } from '@/types';
 import { createEmptyScaffold, scaffoldToObject, validateScaffold } from './scaffold';
 import { formatPromptForModel, getAllTemplates } from './modelTemplates';
 import { v4 as uuidv4 } from 'uuid';

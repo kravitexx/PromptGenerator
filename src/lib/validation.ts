@@ -36,7 +36,7 @@ export function validateCustomFormat(format: CustomFormat): {
   const tokenPattern = /\{([^}]+)\}/g;
   const foundTokens = [...format.template.matchAll(tokenPattern)].map(match => match[1]);
   const validTokens = SCAFFOLD_SLOTS.map(slot => slot.key);
-  const unknownTokens = foundTokens.filter(token => !validTokens.includes(token as any));
+  const unknownTokens = foundTokens.filter(token => !validTokens.includes(token as ScaffoldSlot['key']));
   
   if (unknownTokens.length > 0) {
     warnings.push(`Unknown tokens found: ${unknownTokens.map(t => `{${t}}`).join(', ')}`);

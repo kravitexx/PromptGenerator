@@ -25,7 +25,7 @@ export interface ModelTemplate {
   name: string;
   format: string;
   negativeFormat: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
 }
 
 export interface CustomFormat {
@@ -101,18 +101,18 @@ export interface DriveData {
 export interface ApiError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export class GeminiError extends Error {
-  constructor(public code: string, message: string, public details?: any) {
+  constructor(public code: string, message: string, public details?: unknown) {
     super(message);
     this.name = 'GeminiError';
   }
 }
 
 export class DriveError extends Error {
-  constructor(public code: string, message: string, public details?: any) {
+  constructor(public code: string, message: string, public details?: unknown) {
     super(message);
     this.name = 'DriveError';
   }

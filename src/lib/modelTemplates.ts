@@ -133,7 +133,7 @@ export function formatPromptForModel(
 /**
  * Extracts parameters for a specific model
  */
-export function getModelParameters(templateId: string): Record<string, any> {
+export function getModelParameters(templateId: string): Record<string, unknown> {
   const template = getTemplate(templateId);
   return template?.parameters || {};
 }
