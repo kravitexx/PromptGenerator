@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { GeneratedPrompt } from '@/types';
 import { getAllTemplates, getTemplate } from '@/lib/modelTemplates';
 import { getFormattedPrompt } from '@/lib/promptBuilder';
-import { Copy, Check, Settings } from 'lucide-react';
+import { getStoredCustomFormats, formatPromptWithCustomFormat } from '@/lib/customFormats';
+import { scaffoldToObject } from '@/lib/scaffold';
+import { Copy, Check, Settings, Wand2 } from 'lucide-react';
 
 interface PromptSwitcherProps {
   prompt: GeneratedPrompt;
@@ -24,18 +26,36 @@ export function PromptSwitcher({
   const [selectedTemplateId, setSelectedTemplateId] = useState('stable-diffusion-3.5');
   const [copiedTemplate, setCopiedTemplate] = useState<string | null>(null);
   const [negativePrompt, setNegativePrompt] = useState('');
+  const [customFormats, setCustomFormats] = useState(getStoredCustomFormats());
+  const [selectedCustomFormat, setSelectedCustomFormat] = useState<string | null>(null);
   
   const templates = getAllTemplates();
   const selectedTemplate = getTemplate(selectedTemplateId);
+  const selectedCustom = customFormats.find(f => f.id === selectedCustomFormat);
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
+    setSelectedCustomFormat(null);
     onTemplateChange?.(templateId);
+  };
+
+  const handleCustomFormatSelect = (formatId: string) => {
+    setSelectedCustomFormat(formatId);
+    setSelectedTemplateId('');
+    onTemplateChange?.(formatId);
   };
 
   const handleCopyPrompt = async (templateId: string) => {
     try {
-      const formattedPrompt = getFormattedPrompt(prompt, templateId, negativePrompt);
+      let formattedPrompt: string;
+      
+      if (selectedCustomFormat && selectedCustom) {
+        const scaffoldObject = scaffoldToObject(prompt.scaffold);
+        formattedPrompt = formatPromptWithCustomFormat(scaffoldObject, selectedCustom);
+      } else {
+        formattedPrompt = getFormattedPrompt(prompt, templateId, negativePrompt);
+      }
+      
       await navigator.clipboard.writeText(formattedPrompt);
       setCopiedTemplate(templateId);
       setTimeout(() => setCopiedTemplate(null), 2000);
@@ -46,6 +66,10 @@ export function PromptSwitcher({
 
   const getFormattedPromptSafe = (templateId: string): string => {
     try {
+      if (selectedCustomFormat && selectedCustom) {
+        const scaffoldObject = scaffoldToObject(prompt.scaffold);
+        return formatPromptWithCustomFormat(scaffoldObject, selectedCustom);
+      }
       return getFormattedPrompt(prompt, templateId, negativePrompt);
     } catch (error) {
       return 'Error formatting prompt';
@@ -78,7 +102,7 @@ export function PromptSwitcher({
             {templates.map((template) => (
               <Button
                 key={template.id}
-                variant={selectedTemplateId === template.id ? 'default' : 'outline'}
+                variant={selectedTemplateId === template.id && !selectedCustomFormat ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleTemplateSelect(template.id)}
                 className="justify-start text-left h-auto p-3"
@@ -94,8 +118,36 @@ export function PromptSwitcher({
           </div>
         </div>
 
+        {/* Custom Formats */}
+        {customFormats.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Wand2 className="h-4 w-4" />
+              Custom Formats:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {customFormats.map((format) => (
+                <Button
+                  key={format.id}
+                  variant={selectedCustomFormat === format.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleCustomFormatSelect(format.id)}
+                  className="justify-start text-left h-auto p-3"
+                >
+                  <div>
+                    <div className="font-medium text-sm">{format.name}</div>
+                    <div className="text-xs opacity-70 mt-1 font-mono truncate">
+                      {format.template.substring(0, 30)}...
+                    </div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Negative Prompt Input (if supported) */}
-        {selectedTemplate.negativeFormat && (
+        {selectedTemplate?.negativeFormat && !selectedCustomFormat && (
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Negative Prompt (Optional):
@@ -113,7 +165,7 @@ export function PromptSwitcher({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium">
-              Formatted Prompt for {selectedTemplate.name}:
+              Formatted Prompt for {selectedCustom?.name || selectedTemplate?.name}:
             </label>
             <Button
               variant="outline"
@@ -145,7 +197,7 @@ export function PromptSwitcher({
         </div>
 
         {/* Model Parameters */}
-        {selectedTemplate.parameters && Object.keys(selectedTemplate.parameters).length > 0 && (
+        {selectedTemplate?.parameters && Object.keys(selectedTemplate.parameters).length > 0 && !selectedCustomFormat && (
           <div className="space-y-2">
             <label className="text-sm font-medium">Recommended Parameters:</label>
             <div className="flex flex-wrap gap-2">
