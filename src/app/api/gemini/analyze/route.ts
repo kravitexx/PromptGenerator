@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeImageWithGemini, retryApiCall } from '@/lib/gemini';
+import { analyzeImageWithGemini } from '@/lib/gemini';
+import { compareTokensWithDescription, analyzePromptImageAlignment } from '@/lib/tokenComparison';
+import { createGeneratedPrompt, analyzeInputAndPopulateScaffold } from '@/lib/promptBuilder';
 import { GeminiError } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -10,7 +12,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!image || typeof image !== 'string') {
       return NextResponse.json(
-        { error: 'Image is required and must be a base64 string' },
+        { error: 'Image data is required and must be a base64 string' },
         { status: 400 }
       );
     }
@@ -29,57 +31,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate base64 image format (more lenient check)
-    if (image.length < 100) {
+    // Validate image data format
+    if (!image.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
       return NextResponse.json(
-        { error: 'Image data appears to be too small' },
+        { error: 'Invalid base64 image data' },
         { status: 400 }
       );
     }
 
-    // Validate image size (approximate check for base64)
-    const imageSizeBytes = (image.length * 3) / 4;
-    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
-    if (imageSizeBytes > maxSizeBytes) {
-      return NextResponse.json(
-        { error: 'Image is too large. Maximum size is 10MB.' },
-        { status: 400 }
-      );
-    }
+    // Analyze image using Gemini Vision
+    const geminiAnalysis = await analyzeImageWithGemini({
+      image,
+      originalPrompt,
+      apiKey
+    });
 
-    // Validate prompt length
-    if (originalPrompt.length > 1000) {
-      return NextResponse.json(
-        { error: 'Original prompt is too long. Maximum 1000 characters allowed.' },
-        { status: 400 }
-      );
-    }
+    // Create a prompt object for token comparison
+    const scaffold = analyzeInputAndPopulateScaffold(originalPrompt);
+    const promptObject = createGeneratedPrompt(scaffold, originalPrompt);
 
-    // Analyze the image using Gemini Vision with retry mechanism
-    const analysisResult = await retryApiCall(
-      () => analyzeImageWithGemini({
-        image,
-        originalPrompt,
-        apiKey,
-      }),
-      3,
-      1000
-    );
+    // Perform token comparison analysis
+    const tokenComparisons = compareTokensWithDescription(promptObject, geminiAnalysis.description);
+    
+    // Analyze overall alignment
+    const alignmentAnalysis = analyzePromptImageAlignment(promptObject, tokenComparisons);
+
+    // Combine Gemini analysis with our token comparison
+    const enhancedTokenComparison = geminiAnalysis.tokenComparison.length > 0 
+      ? geminiAnalysis.tokenComparison 
+      : tokenComparisons;
+
+    // Merge suggestions
+    const allSuggestions = [
+      ...geminiAnalysis.suggestions,
+      ...alignmentAnalysis.recommendations
+    ].filter((suggestion, index, array) => 
+      array.indexOf(suggestion) === index // Remove duplicates
+    ).slice(0, 8); // Limit to 8 suggestions
 
     return NextResponse.json({
       success: true,
       data: {
-        ...analysisResult,
+        description: geminiAnalysis.description,
+        tokenComparison: enhancedTokenComparison,
+        suggestions: allSuggestions,
+        overallScore: alignmentAnalysis.overallScore,
+        strengths: alignmentAnalysis.strengths,
+        weaknesses: alignmentAnalysis.weaknesses,
         metadata: {
-          processingTime: Date.now(),
-          originalPromptLength: originalPrompt.length,
-          imageSize: imageSizeBytes,
-          analysisType: 'gemini_vision',
-        },
-      },
+          analysisTime: Date.now(),
+          promptLength: originalPrompt.length,
+          tokensAnalyzed: enhancedTokenComparison.length,
+          geminiAnalysisAvailable: geminiAnalysis.tokenComparison.length > 0
+        }
+      }
     });
+
   } catch (error) {
-    console.error('Gemini analyze API error:', error);
+    console.error('Image analysis API error:', error);
 
     if (error instanceof GeminiError) {
       const statusCode = error.code === 'MISSING_API_KEY' ? 401 : 
@@ -98,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Internal server error during image analysis',
         timestamp: new Date().toISOString(),
       },
       { status: 500 }

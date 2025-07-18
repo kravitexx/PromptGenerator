@@ -192,25 +192,36 @@ export async function analyzeImageWithGemini(request: ImageAnalysisRequest): Pro
 
   try {
     const analysisPrompt = `
-Analyze this image and provide:
-1. A detailed description of what you see
-2. Compare it to this original prompt: "${originalPrompt}"
-3. Identify which elements from the prompt are present or missing
-4. Suggest improvements to the prompt for better results
+You are an expert AI image analysis assistant. Analyze this image and compare it to the original prompt to provide detailed feedback.
 
-Please format your response as JSON with the following structure:
+ORIGINAL PROMPT: "${originalPrompt}"
+
+Please provide a comprehensive analysis in the following JSON format:
+
 {
-  "description": "detailed description of the image",
+  "description": "A detailed, objective description of what you see in the image",
   "tokenComparison": [
     {
-      "token": "element from prompt",
+      "token": "specific element from the prompt",
       "present": true/false,
       "confidence": 0.0-1.0,
-      "suggestion": "optional improvement suggestion"
+      "suggestion": "specific improvement suggestion if missing or unclear"
     }
   ],
-  "suggestions": ["list of improvement suggestions"]
+  "suggestions": [
+    "Specific actionable suggestions for improving the prompt",
+    "Focus on what could make the image match the prompt better"
+  ]
 }
+
+ANALYSIS GUIDELINES:
+1. Break down the original prompt into key visual elements (subjects, colors, lighting, style, composition, etc.)
+2. For each element, determine if it's clearly present, partially present, or missing
+3. Assign confidence scores: 1.0 = perfectly represented, 0.8-0.9 = clearly present, 0.5-0.7 = partially present, 0.0-0.4 = missing or unclear
+4. Provide specific, actionable suggestions for improvement
+5. Focus on visual elements that can be controlled through prompt engineering
+
+Be thorough but concise. Analyze at least 5-10 key elements from the prompt.
 `;
 
     const response = await fetch(

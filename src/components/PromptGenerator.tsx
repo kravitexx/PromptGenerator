@@ -8,6 +8,7 @@ import { GeneratedPrompt, ScaffoldSlot } from '@/types';
 import { PromptSwitcher } from '@/components/PromptSwitcher';
 import { ScaffoldDisplay } from '@/components/ScaffoldDisplay';
 import { PromptImprover } from '@/components/PromptImprover';
+import { ImageFeedbackAnalyzer } from '@/components/ImageFeedbackAnalyzer';
 import { updateGeneratedPrompt } from '@/lib/promptBuilder';
 import { 
   Wand2, 
@@ -213,6 +214,14 @@ export function PromptGenerator({
       <PromptSwitcher
         prompt={currentPrompt}
         onTemplateChange={handleTemplateChange}
+      />
+
+      {/* Image Feedback Analyzer */}
+      <ImageFeedbackAnalyzer
+        prompt={currentPrompt}
+        onFeedbackReceived={(feedback) => {
+          console.log('Feedback received:', feedback);
+        }}
       />
 
       {/* Quick Stats */}
