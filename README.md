@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prompt Generator
 
-## Getting Started
+AI-powered text-to-image prompt generator with universal scaffold support for multiple AI image generation models.
 
-First, run the development server:
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Clerk Authentication
+
+1. Create a Clerk account at [https://clerk.com](https://clerk.com)
+2. Create a new application in your Clerk dashboard
+3. Copy your publishable key and secret key
+4. Update `.env.local` with your actual Clerk keys:
+
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_actual_key_here
+CLERK_SECRET_KEY=sk_test_your_actual_key_here
+```
+
+### 3. Configure Google SSO (Recommended)
+
+1. In your Clerk dashboard, go to "Social Connections"
+2. Enable Google OAuth
+3. Configure Google OAuth with your Google Cloud Console credentials
+4. This enables Google Drive integration for data persistence
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/src/app` - Next.js 14 App Router pages
+- `/src/components` - React components including shadcn/ui
+- `/middleware.ts` - Clerk authentication middleware
+- `/.env.local` - Environment variables (not committed to git)
 
-## Learn More
+## Authentication Flow
 
-To learn more about Next.js, take a look at the following resources:
+1. Unauthenticated users see the landing page with sign-in option
+2. Users can sign in via Clerk (Google SSO recommended)
+3. After authentication, users are redirected to `/chat`
+4. Protected routes require authentication via middleware
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Next Steps
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This completes the project foundation and authentication setup. The next tasks will implement:
+- Core data models and utilities
+- API key management system
+- Gemini API integration
+- Chat interface components
+- And more...
