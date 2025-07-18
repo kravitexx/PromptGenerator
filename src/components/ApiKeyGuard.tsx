@@ -46,8 +46,8 @@ export function ApiKeyGuard({ children, fallback, showTitle = true }: ApiKeyGuar
             </CardHeader>
           </Card>
         )}
-        
-        <ApiKeyInput 
+
+        <ApiKeyInput
           onApiKeyValidated={() => {
             // The useApiKey hook will automatically update when sessionStorage changes
             window.location.reload();
