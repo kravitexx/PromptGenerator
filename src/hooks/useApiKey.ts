@@ -59,6 +59,25 @@ export function useApiKey() {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      // Basic validation first
+      if (!newApiKey || newApiKey.trim().length === 0) {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'Please enter an API key',
+        }));
+        return false;
+      }
+
+      if (!newApiKey.startsWith('AIzaSy')) {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'Invalid API key format. Gemini API keys should start with "AIzaSy"',
+        }));
+        return false;
+      }
+
       const isValid = await testGeminiApiKey(newApiKey);
       
       if (isValid) {
@@ -74,15 +93,15 @@ export function useApiKey() {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: 'Invalid API key',
+          error: 'API key is invalid or has insufficient permissions. Please check your key and try again.',
         }));
         return false;
       }
-    } catch {
+    } catch (error) {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Failed to validate API key',
+        error: 'Failed to validate API key. Please check your internet connection and try again.',
       }));
       return false;
     }

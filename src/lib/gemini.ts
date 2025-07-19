@@ -9,6 +9,12 @@ const GEMINI_MODEL = 'gemini-1.5-flash';
  */
 export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
   try {
+    // Basic format validation
+    if (!apiKey || !apiKey.startsWith('AIzaSy')) {
+      console.error('Invalid API key format. Gemini API keys should start with "AIzaSy"');
+      return false;
+    }
+
     const response = await fetch(
       `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
       {
@@ -27,16 +33,33 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
     );
 
     if (response.ok) {
+      console.log('API key validation successful');
       return true;
-    } else if (response.status === 400) {
-      // Check if it's a valid API key but invalid request (which is fine for testing)
+    } else {
       const errorData = await response.json();
-      return !errorData.error?.message?.includes('API_KEY_INVALID');
+      console.error('API key validation failed:', {
+        status: response.status,
+        error: errorData
+      });
+      
+      // Check for specific error types
+      if (response.status === 400) {
+        const errorMessage = errorData.error?.message || '';
+        if (errorMessage.includes('API_KEY_INVALID')) {
+          console.error('API key is invalid');
+          return false;
+        }
+        // Some 400 errors might be due to request format but key is valid
+        return !errorMessage.includes('API_KEY');
+      } else if (response.status === 403) {
+        console.error('API key has insufficient permissions or quota exceeded');
+        return false;
+      }
+      
+      return false;
     }
-    
-    return false;
   } catch (error) {
-    console.error('API key test failed:', error);
+    console.error('API key test failed with network error:', error);
     return false;
   }
 }
