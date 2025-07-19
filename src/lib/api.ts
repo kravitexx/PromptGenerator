@@ -1,5 +1,6 @@
 import { getStoredApiKey } from '@/lib/gemini';
 import { GeminiError } from '@/types';
+import { retryWithBackoff, normalizeError, validatePromptInput, sanitizeInput, logError, AppError } from '@/lib/errorHandling';
 
 // API client configuration
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
@@ -7,7 +8,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:3000';
 
 /**
- * Makes a request to generate an enhanced prompt
+ * Makes a request to generate an enhanced prompt with comprehensive error handling
  */
 export async function generatePrompt(
   prompt: string,
@@ -19,39 +20,67 @@ export async function generatePrompt(
   suggestions: string[];
   clarifyingQuestions: unknown[];
 }> {
+  // Validate and sanitize input
+  const validation = validatePromptInput(prompt);
+  if (!validation.isValid) {
+    const error = normalizeError(new Error(validation.message));
+    logError(error, { input: prompt.substring(0, 100) });
+    throw error;
+  }
+
+  const sanitizedPrompt = sanitizeInput(prompt);
   const apiKey = getStoredApiKey();
   
   if (!apiKey) {
-    throw new GeminiError('MISSING_API_KEY', 'No API key found. Please configure your Gemini API key.');
+    const error = new GeminiError('MISSING_API_KEY', 'No API key found. Please configure your Gemini API key.');
+    logError(normalizeError(error));
+    throw error;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/gemini/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt,
-      images: images || [],
-      apiKey,
-    }),
-  });
+  try {
+    return await retryWithBackoff(async () => {
+      const response = await fetch(`${API_BASE_URL}/api/gemini/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: sanitizedPrompt,
+          images: images || [],
+          apiKey,
+        }),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new GeminiError(
-      errorData.code || 'API_ERROR',
-      errorData.error || 'Failed to generate prompt',
-      errorData.details
-    );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new GeminiError(
+          errorData.code || 'API_ERROR',
+          errorData.error || 'Failed to generate prompt',
+          errorData.details
+        );
+      }
+
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!validateApiResponse(data, ['data'])) {
+        throw new GeminiError('INVALID_RESPONSE', 'Invalid response format from API');
+      }
+      
+      return data.data;
+    }, 3, 1000, 5000);
+  } catch (error) {
+    const appError = normalizeError(error);
+    logError(appError, { 
+      input: sanitizedPrompt.substring(0, 100),
+      hasImages: Boolean(images?.length)
+    });
+    throw appError;
   }
-
-  const data = await response.json();
-  return data.data;
 }
 
 /**
- * Makes a request to analyze an image
+ * Makes a request to analyze an image with comprehensive error handling
  */
 export async function analyzeImage(
   image: string,
@@ -61,61 +90,85 @@ export async function analyzeImage(
   tokenComparison: unknown[];
   suggestions: string[];
 }> {
+  // Validate inputs
+  if (!image || !image.trim()) {
+    const error = normalizeError(new Error('Image data is required'));
+    logError(error);
+    throw error;
+  }
+
+  const validation = validatePromptInput(originalPrompt);
+  if (!validation.isValid) {
+    const error = normalizeError(new Error(validation.message));
+    logError(error, { prompt: originalPrompt.substring(0, 100) });
+    throw error;
+  }
+
+  const sanitizedPrompt = sanitizeInput(originalPrompt);
   const apiKey = getStoredApiKey();
   
   if (!apiKey) {
-    throw new GeminiError('MISSING_API_KEY', 'No API key found. Please configure your Gemini API key.');
+    const error = new GeminiError('MISSING_API_KEY', 'No API key found. Please configure your Gemini API key.');
+    logError(normalizeError(error));
+    throw error;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/gemini/analyze`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      image,
-      originalPrompt,
-      apiKey,
-    }),
-  });
+  try {
+    return await retryWithBackoff(async () => {
+      const response = await fetch(`${API_BASE_URL}/api/gemini/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image,
+          originalPrompt: sanitizedPrompt,
+          apiKey,
+        }),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new GeminiError(
-      errorData.code || 'API_ERROR',
-      errorData.error || 'Failed to analyze image',
-      errorData.details
-    );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new GeminiError(
+          errorData.code || 'API_ERROR',
+          errorData.error || 'Failed to analyze image',
+          errorData.details
+        );
+      }
+
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!validateApiResponse(data, ['data'])) {
+        throw new GeminiError('INVALID_RESPONSE', 'Invalid response format from API');
+      }
+      
+      return data.data;
+    }, 3, 1000, 5000);
+  } catch (error) {
+    const appError = normalizeError(error);
+    logError(appError, { 
+      prompt: sanitizedPrompt.substring(0, 100),
+      hasImage: Boolean(image)
+    });
+    throw appError;
   }
-
-  const data = await response.json();
-  return data.data;
 }
 
 /**
- * Generic API error handler
+ * Enhanced API error handler using the comprehensive error handling system
  */
 export function handleApiError(error: unknown): string {
-  if (error instanceof GeminiError) {
-    switch (error.code) {
-      case 'MISSING_API_KEY':
-        return 'API key is missing. Please configure your Gemini API key.';
-      case 'API_ERROR':
-        return `API Error: ${error.message}`;
-      case 'NETWORK_ERROR':
-        return 'Network error. Please check your connection and try again.';
-      case 'NO_RESPONSE':
-        return 'No response from AI. Please try again.';
-      default:
-        return error.message || 'An unexpected error occurred.';
-    }
-  }
-  
-  if (error instanceof Error) {
-    return error.message;
-  }
-  
-  return 'An unexpected error occurred.';
+  const appError = normalizeError(error);
+  logError(appError);
+  return appError.userMessage || appError.message;
+}
+
+/**
+ * Get a normalized AppError from any error
+ */
+export function getAppError(error: unknown): AppError {
+  return normalizeError(error);
 }
 
 /**
