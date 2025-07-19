@@ -73,16 +73,43 @@ export function ImageDropZone({
     }
 
     try {
-      // Process valid files
+      // Process valid files with optimization
       const newImages: ImageFile[] = [];
       
       for (const file of validFiles) {
-        const base64 = await fileToBase64(file);
-        const preview = URL.createObjectURL(file);
+        // Optimize image if it's large
+        let processedFile = file;
+        if (file.size > 1024 * 1024) { // 1MB threshold
+          try {
+            const { optimizeImage } = await import('@/lib/imageOptimization');
+            const optimized = await optimizeImage(file, {
+              maxWidth: 1024,
+              maxHeight: 1024,
+              quality: 0.8,
+              maxSizeKB: 500
+            });
+            
+            // Convert optimized data URL back to file
+            const response = await fetch(optimized.dataUrl);
+            const blob = await response.blob();
+            processedFile = new File([blob], file.name, { type: 'image/jpeg' });
+            
+            console.log(`Image optimized: ${file.name}`, {
+              originalSize: `${(file.size / 1024).toFixed(1)}KB`,
+              optimizedSize: `${(processedFile.size / 1024).toFixed(1)}KB`,
+              compressionRatio: `${(optimized.compressionRatio * 100).toFixed(1)}%`
+            });
+          } catch (optimizationError) {
+            console.warn('Image optimization failed, using original:', optimizationError);
+          }
+        }
+        
+        const base64 = await fileToBase64(processedFile);
+        const preview = URL.createObjectURL(processedFile);
         
         newImages.push({
           id: crypto.randomUUID(),
-          file,
+          file: processedFile,
           base64,
           preview,
         });
@@ -95,7 +122,8 @@ export function ImageDropZone({
       if (onImagesChange) {
         onImagesChange(updatedImages.map(img => img.base64));
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to process images:', error);
       setError('Failed to process images. Please try again.');
     } finally {
       setIsProcessing(false);

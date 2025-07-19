@@ -120,3 +120,133 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Performance optimizations and animations */
+@layer utilities {
+  /* Shimmer loading animation */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+  
+  /* Smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  
+  /* GPU acceleration for animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimized focus styles */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Loading states */
+  .loading-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .loading-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Image optimization */
+  .image-optimized {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Text optimization */
+  .text-optimized {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer,
+    .loading-pulse,
+    .loading-spin {
+      animation: none;
+    }
+    
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .border {
+      border-width: 2px;
+    }
+    
+    .focus-visible-ring {
+      @apply focus-visible:ring-4;
+    }
+  }
+  
+  /* Print styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    * {
+      background: white !important;
+      color: black !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
+/* Component-specific optimizations */
+@layer components {
+  /* Optimized button styles */
+  .btn-optimized {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible-ring disabled:pointer-events-none disabled:opacity-50;
+    contain: layout style paint;
+  }
+  
+  /* Optimized card styles */
+  .card-optimized {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    contain: layout style paint;
+  }
+  
+  /* Optimized input styles */
+  .input-optimized {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible-ring disabled:cursor-not-allowed disabled:opacity-50;
+    contain: layout style;
+  }
+  
+  /* Skeleton loading styles */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+    contain: layout style paint;
+  }
+  
+  .skeleton-shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .skeleton-shimmer::after {
+    @apply absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    content: '';
+  }
+}
