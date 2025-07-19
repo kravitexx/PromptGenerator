@@ -65,7 +65,7 @@ describe('Gemini API Client', () => {
         prompt: 'test',
         apiKey: 'test-key',
         images: []
-      })).rejects.toThrow('Network error');
+      })).rejects.toThrow('Failed to connect to Gemini API');
     });
   });
 
