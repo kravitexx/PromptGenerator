@@ -4,6 +4,7 @@ import { UserButton } from '@clerk/nextjs'
 import { ChatWindow } from '@/components/ChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
 import { DriveStatus } from '@/components/DriveStatus'
+import { ApiKeyManager } from '@/components/ApiKeyManager'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
 
@@ -25,6 +26,7 @@ export default function ChatPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <ApiKeyManager compact />
               <DriveStatus />
               <UserButton 
                 appearance={{
@@ -50,8 +52,9 @@ export default function ChatPage() {
               />
             </div>
             
-            {/* Sidebar with Drive Status and Info */}
+            {/* Sidebar with API Key, Drive Status and Info */}
             <div className="space-y-6">
+              <ApiKeyManager />
               <DriveStatus showDetails={true} />
               
               {currentPrompt && (

@@ -62,10 +62,8 @@ export function useDrivePersistence(): DriveState & DriveOperations {
     }
   }, []);
 
-  // Check Drive access on mount
-  useEffect(() => {
-    checkAccess();
-  }, [checkAccess]);
+  // Don't automatically check Drive access on mount to avoid authentication errors
+  // Users can manually connect Drive when they want to
 
   const saveData = useCallback(async (
     type: 'all' | 'chats' | 'customFormats' | 'userPreferences', 
