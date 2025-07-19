@@ -8,11 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CustomFormat } from '@/types';
 import { FormatWizard } from '@/components/FormatWizard';
+import { useCustomFormatsPersistence } from '@/hooks/useDrivePersistence';
 import { 
-  getStoredCustomFormats, 
-  saveCustomFormat, 
-  deleteCustomFormat,
-  duplicateCustomFormat,
   validateCustomFormat,
   exportCustomFormats,
   importCustomFormats,
@@ -43,7 +40,6 @@ export function CustomFormatManager({
   selectedFormatId, 
   className 
 }: CustomFormatManagerProps) {
-  const [customFormats, setCustomFormats] = useState<CustomFormat[]>([]);
   const [showWizard, setShowWizard] = useState(false);
   const [editingFormat, setEditingFormat] = useState<CustomFormat | undefined>();
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
@@ -51,15 +47,13 @@ export function CustomFormatManager({
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importData, setImportData] = useState('');
 
-  // Load custom formats on mount
-  useEffect(() => {
-    loadCustomFormats();
-  }, []);
-
-  const loadCustomFormats = () => {
-    const formats = getStoredCustomFormats();
-    setCustomFormats(formats);
-  };
+  const { 
+    formats: customFormats, 
+    addFormat, 
+    updateFormat, 
+    deleteFormat,
+    isLoading 
+  } = useCustomFormatsPersistence();
 
   const handleCreateNew = () => {
     setEditingFormat(undefined);
@@ -71,10 +65,13 @@ export function CustomFormatManager({
     setShowWizard(true);
   };
 
-  const handleSaveFormat = (format: CustomFormat) => {
+  const handleSaveFormat = async (format: CustomFormat) => {
     try {
-      saveCustomFormat(format);
-      loadCustomFormats();
+      if (editingFormat) {
+        await updateFormat(format.id, format);
+      } else {
+        await addFormat(format);
+      }
       setShowWizard(false);
       setEditingFormat(undefined);
     } catch (error) {
@@ -82,21 +79,25 @@ export function CustomFormatManager({
     }
   };
 
-  const handleDelete = (formatId: string) => {
+  const handleDelete = async (formatId: string) => {
     try {
-      deleteCustomFormat(formatId);
-      loadCustomFormats();
+      await deleteFormat(formatId);
       setShowDeleteDialog(null);
     } catch (error) {
       console.error('Failed to delete format:', error);
     }
   };
 
-  const handleDuplicate = (formatId: string) => {
+  const handleDuplicate = async (formatId: string) => {
     try {
-      const duplicated = duplicateCustomFormat(formatId);
-      if (duplicated) {
-        loadCustomFormats();
+      const originalFormat = customFormats.find(f => f.id === formatId);
+      if (originalFormat) {
+        const duplicatedFormat: CustomFormat = {
+          ...originalFormat,
+          id: crypto.randomUUID(),
+          name: `${originalFormat.name} (Copy)`
+        };
+        await addFormat(duplicatedFormat);
       }
     } catch (error) {
       console.error('Failed to duplicate format:', error);
@@ -118,16 +119,40 @@ export function CustomFormatManager({
 
   const handleImport = () => {
     try {
-      const result = importCustomFormats(importData);
-      if (result.success) {
-        loadCustomFormats();
-        setShowImportDialog(false);
-        setImportData('');
-        alert(`Successfully imported ${result.imported} format(s)`);
-      } else {
-        alert(`Import failed: ${result.errors.join(', ')}`);
+      // Parse and validate the import data manually
+      const data = JSON.parse(importData);
+      if (!Array.isArray(data)) {
+        alert('Import failed: Expected an array of custom formats');
+        return;
       }
-    } catch (error) {
+
+      let imported = 0;
+      const errors: string[] = [];
+
+      data.forEach((format, index) => {
+        try {
+          if (!format.id || !format.name || !format.template) {
+            errors.push(`Format ${index + 1}: Missing required fields`);
+            return;
+          }
+
+          // Add the format
+          addFormat(format);
+          imported++;
+        } catch (err) {
+          errors.push(`Format ${index + 1}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      });
+
+      setShowImportDialog(false);
+      setImportData('');
+      
+      if (imported > 0) {
+        alert(`Successfully imported ${imported} format(s)${errors.length > 0 ? ` with ${errors.length} errors` : ''}`);
+      } else {
+        alert(`Import failed: ${errors.join(', ')}`);
+      }
+    } catch {
       alert('Import failed: Invalid JSON format');
     }
   };

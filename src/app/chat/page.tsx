@@ -1,6 +1,19 @@
+'use client';
+
 import { UserButton } from '@clerk/nextjs'
+import { ChatWindow } from '@/components/ChatWindow'
+import { ApiKeyGuard } from '@/components/ApiKeyGuard'
+import { DriveStatus } from '@/components/DriveStatus'
+import { GeneratedPrompt } from '@/types'
+import { useState } from 'react'
 
 export default function ChatPage() {
+  const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
+
+  const handlePromptGenerated = (prompt: GeneratedPrompt) => {
+    setCurrentPrompt(prompt);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -12,6 +25,7 @@ export default function ChatPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <DriveStatus />
               <UserButton 
                 appearance={{
                   elements: {
@@ -25,14 +39,35 @@ export default function ChatPage() {
       </header>
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Welcome to Prompt Generator
-          </h2>
-          <p className="text-gray-600">
-            This is the protected chat interface. The actual chat functionality will be implemented in later tasks.
-          </p>
-        </div>
+        <ApiKeyGuard>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Chat Interface */}
+            <div className="lg:col-span-2">
+              <ChatWindow 
+                onPromptGenerated={handlePromptGenerated}
+                className="h-[calc(100vh-200px)]"
+                showPromptGenerator={true}
+              />
+            </div>
+            
+            {/* Sidebar with Drive Status and Info */}
+            <div className="space-y-6">
+              <DriveStatus showDetails={true} />
+              
+              {currentPrompt && (
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">Current Prompt</h3>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Model: {currentPrompt.metadata.model}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Generated: {currentPrompt.metadata.createdAt.toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </ApiKeyGuard>
       </main>
     </div>
   )

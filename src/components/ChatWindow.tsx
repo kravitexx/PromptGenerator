@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { ChatMessage, GeneratedPrompt } from '@/types';
 import { generatePrompt, handleApiError } from '@/lib/api';
 import { useApiKey } from '@/hooks/useApiKey';
+import { useChatPersistence } from '@/hooks/useDrivePersistence';
 import { MessageRenderer } from '@/components/MessageRenderer';
 import { TypingIndicator } from '@/components/LoadingStates';
 import { ImageDropZone } from '@/components/ImageDropZone';
 import { PromptGenerator } from '@/components/PromptGenerator';
+import { DriveStatus } from '@/components/DriveStatus';
 import { 
   Send, 
   Bot, 
@@ -28,7 +30,6 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ onPromptGenerated, className, showPromptGenerator = true }: ChatWindowProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { hasValidKey } = useApiKey();
+  const { messages, addMessage, clearMessages, isLoading: isDriveLoading } = useChatPersistence();
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -64,7 +66,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
       images: images.length > 0 ? [...images] : undefined,
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    await addMessage(userMessage);
     setInputValue('');
     setImages([]);
     setShowImageDropZone(false);
@@ -83,7 +85,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
         promptData: result.generatedPrompt as GeneratedPrompt,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      await addMessage(assistantMessage);
       
       // Update current prompt for the generator
       if (result.generatedPrompt) {
@@ -106,7 +108,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, errorAssistantMessage]);
+      await addMessage(errorAssistantMessage);
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +121,8 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
     }
   };
 
-  const clearChat = () => {
-    setMessages([]);
+  const clearChat = async () => {
+    await clearMessages();
     setError(null);
     setImages([]);
     setShowImageDropZone(false);
@@ -161,12 +163,20 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
             <Badge variant="secondary" className="text-xs">
               {messages.length} messages
             </Badge>
+            {isDriveLoading && (
+              <Badge variant="outline" className="text-xs">
+                Syncing...
+              </Badge>
+            )}
           </div>
-          {messages.length > 0 && (
-            <Button variant="outline" size="sm" onClick={clearChat}>
-              Clear Chat
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <DriveStatus />
+            {messages.length > 0 && (
+              <Button variant="outline" size="sm" onClick={clearChat}>
+                Clear Chat
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Messages Area */}
