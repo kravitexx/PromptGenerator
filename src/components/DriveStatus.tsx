@@ -130,7 +130,7 @@ export function DriveStatus({ className, showDetails = false }: DriveStatusProps
         </span>
         {lastSaved && (
           <span className="text-xs text-gray-500">
-            Saved {lastSaved.toLocaleTimeString()}
+            Saved {new Date(lastSaved).toLocaleTimeString()}
           </span>
         )}
       </div>
@@ -269,7 +269,7 @@ export function DriveStatus({ className, showDetails = false }: DriveStatusProps
           {/* Last Saved Info */}
           {lastSaved && (
             <div className="text-xs text-gray-500 text-center">
-              Last saved: {lastSaved.toLocaleString()}
+              Last saved: {new Date(lastSaved).toLocaleString()}
             </div>
           )}
 

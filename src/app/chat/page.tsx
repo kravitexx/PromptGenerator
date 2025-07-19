@@ -64,7 +64,7 @@ export default function ChatPage() {
                     Model: {currentPrompt.metadata.model}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Generated: {currentPrompt.metadata.createdAt.toLocaleString()}
+                    Generated: {new Date(currentPrompt.metadata.createdAt).toLocaleString()}
                   </p>
                 </div>
               )}

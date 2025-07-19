@@ -168,7 +168,7 @@ export function PromptGenerator({
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Created:</span>{' '}
-                {currentPrompt.metadata.createdAt.toLocaleDateString()}
+                {new Date(currentPrompt.metadata.createdAt).toLocaleDateString()}
               </div>
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Version:</span>{' '}
