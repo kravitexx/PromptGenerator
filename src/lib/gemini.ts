@@ -10,11 +10,75 @@ const GEMINI_MODEL = 'gemini-1.5-flash';
 export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
   try {
     // Basic format validation
-    if (!apiKey || !apiKey.startsWith('AIzaSy')) {
+    if (!apiKey || apiKey.trim().length === 0) {
+      console.error('API key is empty');
+      return false;
+    }
+
+    if (!apiKey.startsWith('AIzaSy')) {
       console.error('Invalid API key format. Gemini API keys should start with "AIzaSy"');
       return false;
     }
 
+    // Use the models list endpoint for validation (simpler and more reliable)
+    const response = await fetch(
+      `${GEMINI_API_BASE_URL}/models?key=${apiKey}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('API validation response status:', response.status);
+
+    if (response.ok) {
+      console.log('API key validation successful');
+      return true;
+    } else {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError);
+        errorData = { error: { message: 'Unknown error' } };
+      }
+      
+      console.error('API key validation failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      
+      // Check for specific error types
+      if (response.status === 400) {
+        const errorMessage = errorData.error?.message || '';
+        if (errorMessage.includes('API_KEY_INVALID') || errorMessage.includes('invalid')) {
+          console.error('API key is invalid');
+          return false;
+        }
+      } else if (response.status === 403) {
+        console.error('API key has insufficient permissions or quota exceeded');
+        return false;
+      } else if (response.status === 401) {
+        console.error('API key is unauthorized');
+        return false;
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    console.error('API key test failed with network error:', error);
+    return false;
+  }
+}
+
+/**
+ * Alternative API key validation using generateContent endpoint
+ */
+export async function testGeminiApiKeyAlternative(apiKey: string): Promise<boolean> {
+  try {
     const response = await fetch(
       `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
       {
@@ -25,41 +89,32 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: 'Hello'
+              text: 'test'
             }]
           }]
         }),
       }
     );
 
-    if (response.ok) {
-      console.log('API key validation successful');
+    // If we get a response (even an error), the API key format is likely correct
+    if (response.status === 200) {
       return true;
-    } else {
-      const errorData = await response.json();
-      console.error('API key validation failed:', {
-        status: response.status,
-        error: errorData
-      });
-      
-      // Check for specific error types
-      if (response.status === 400) {
+    } else if (response.status === 400) {
+      // Check if it's a request format issue (key is valid) vs invalid key
+      try {
+        const errorData = await response.json();
         const errorMessage = errorData.error?.message || '';
-        if (errorMessage.includes('API_KEY_INVALID')) {
-          console.error('API key is invalid');
-          return false;
-        }
-        // Some 400 errors might be due to request format but key is valid
-        return !errorMessage.includes('API_KEY');
-      } else if (response.status === 403) {
-        console.error('API key has insufficient permissions or quota exceeded');
+        // If it's not an API key error, the key is probably valid
+        return !errorMessage.toLowerCase().includes('api_key') && 
+               !errorMessage.toLowerCase().includes('invalid');
+      } catch {
         return false;
       }
-      
-      return false;
     }
+    
+    return false;
   } catch (error) {
-    console.error('API key test failed with network error:', error);
+    console.error('Alternative API key test failed:', error);
     return false;
   }
 }

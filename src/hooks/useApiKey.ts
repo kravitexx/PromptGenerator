@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getStoredApiKey, testGeminiApiKey } from '@/lib/gemini';
+import { getStoredApiKey, testGeminiApiKey, testGeminiApiKeyAlternative } from '@/lib/gemini';
 
 export interface ApiKeyState {
   apiKey: string | null;
@@ -78,7 +78,23 @@ export function useApiKey() {
         return false;
       }
 
-      const isValid = await testGeminiApiKey(newApiKey);
+      if (newApiKey.length < 35) {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'API key appears to be too short. Please check your key.',
+        }));
+        return false;
+      }
+
+      // Try primary validation method
+      let isValid = await testGeminiApiKey(newApiKey);
+      
+      // If primary method fails, try alternative method
+      if (!isValid) {
+        console.log('Primary validation failed, trying alternative method...');
+        isValid = await testGeminiApiKeyAlternative(newApiKey);
+      }
       
       if (isValid) {
         sessionStorage.setItem('gemini_api_key', newApiKey);
@@ -93,7 +109,7 @@ export function useApiKey() {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: 'API key is invalid or has insufficient permissions. Please check your key and try again.',
+          error: 'API key is invalid or has insufficient permissions. Please verify your key from Google AI Studio.',
         }));
         return false;
       }
