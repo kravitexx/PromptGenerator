@@ -50,12 +50,13 @@ export function useDrivePersistence(): DriveState & DriveOperations {
         throw new Error(result.error || 'Failed to check Drive access');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      // Don't show error for Drive access check - just assume no access
+      console.warn('Drive access check failed:', error);
       setState(prev => ({ 
         ...prev, 
         hasAccess: false,
         isLoading: false,
-        error: errorMessage 
+        error: null // Don't show error to user
       }));
       return false;
     }
@@ -242,17 +243,31 @@ export function useAutoSave<T>(
 
 // Hook for managing chat persistence specifically
 export function useChatPersistence() {
-  const { saveData, loadData, isLoading, error } = useDrivePersistence();
+  const { saveData, loadData, isLoading, error, hasAccess } = useDrivePersistence();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const loadMessages = useCallback(async () => {
     try {
-      const loadedMessages = await loadData('chats');
-      setMessages((loadedMessages as ChatMessage[]) || []);
+      if (hasAccess) {
+        // Try to load from Drive first
+        const loadedMessages = await loadData('chats');
+        setMessages((loadedMessages as ChatMessage[]) || []);
+      } else {
+        // Fallback to localStorage
+        const localMessages = localStorage.getItem('chat_messages');
+        if (localMessages) {
+          setMessages(JSON.parse(localMessages));
+        }
+      }
     } catch (error) {
-      console.error('Failed to load chat messages:', error);
+      console.warn('Failed to load chat messages from Drive, trying localStorage:', error);
+      // Fallback to localStorage
+      const localMessages = localStorage.getItem('chat_messages');
+      if (localMessages) {
+        setMessages(JSON.parse(localMessages));
+      }
     }
-  }, [loadData]);
+  }, [loadData, hasAccess]);
 
   // Load messages on mount
   useEffect(() => {
@@ -261,17 +276,30 @@ export function useChatPersistence() {
 
   const saveMessages = useCallback(async (newMessages: ChatMessage[]) => {
     try {
-      await saveData('chats', newMessages);
+      // Always save to localStorage as fallback
+      localStorage.setItem('chat_messages', JSON.stringify(newMessages));
+      
+      // Only try to save to Drive if we have access
+      if (hasAccess) {
+        await saveData('chats', newMessages);
+      }
       setMessages(newMessages);
     } catch (error) {
-      console.error('Failed to save chat messages:', error);
-      throw error;
+      console.warn('Failed to save chat messages to Drive, saved locally:', error);
+      // Still update local state
+      setMessages(newMessages);
     }
-  }, [saveData]);
+  }, [saveData, hasAccess]);
 
   const addMessage = useCallback(async (message: ChatMessage) => {
     const updatedMessages = [...messages, message];
-    await saveMessages(updatedMessages);
+    try {
+      await saveMessages(updatedMessages);
+    } catch (error) {
+      // If save fails, still update local state
+      console.warn('Failed to save message to Drive, continuing with local storage:', error);
+      setMessages(updatedMessages);
+    }
   }, [messages, saveMessages]);
 
   const clearMessages = useCallback(async () => {
