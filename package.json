@@ -7,13 +7,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:unit": "vitest run src/lib/__tests__ src/components/__tests__",
     "test:api": "vitest run src/app/api/__tests__",
-    "test:e2e": "vitest run src/e2e/__tests__"
+    "test:e2e": "vitest run src/e2e/__tests__",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf .next node_modules/.cache",
+    "analyze": "ANALYZE=true npm run build",
+    "postman:test": "newman run docs/postman-collection.json",
+    "deploy:vercel": "vercel --prod",
+    "deploy:preview": "vercel"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",

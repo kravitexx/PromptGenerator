@@ -1,0 +1,31 @@
+{
+  "id": "test-environment",
+  "name": "Test Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://your-preview-deployment.vercel.app",
+      "description": "Base URL for the test environment (will be updated by CI/CD)",
+      "enabled": true
+    },
+    {
+      "key": "geminiApiKey",
+      "value": "test-api-key-placeholder",
+      "description": "Test Gemini API key (replace with actual key for testing)",
+      "enabled": true
+    },
+    {
+      "key": "testUserId",
+      "value": "test-user-123",
+      "description": "Test user ID for authenticated requests",
+      "enabled": true
+    },
+    {
+      "key": "testImageBase64",
+      "value": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=",
+      "description": "Sample base64 encoded image for testing",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "AI Prompt Generator API",
+    "description": "Postman collection for testing the AI Prompt Generator Gemini API endpoints",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the application (change to your deployed URL)"
+    },
+    {
+      "key": "geminiApiKey",
+      "value": "your-gemini-api-key-here",
+      "description": "Your Google AI Studio Gemini API key"
+    }
+  ],
+  "item": [
+    {
+      "name": "Gemini API",
+      "item": [
+        {
+          "name": "Generate Prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A majestic mountain landscape at sunset\",\n  \"apiKey\": \"{{geminiApiKey}}\",\n  \"images\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gemini/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gemini", "generate"]
+            },
+            "description": "Generate a structured prompt using the 7-slot scaffold system"
+          },
+          "response": [
+            {
+              "name": "Successful Generation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"prompt\": \"A majestic mountain landscape at sunset\",\n  \"apiKey\": \"valid-api-key\",\n  \"images\": []\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/gemini/generate",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "gemini", "generate"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"generatedPrompt\": {\n      \"rawText\": \"Majestic mountain landscape at golden hour sunset, dramatic peaks silhouetted against vibrant orange and pink sky, serene alpine setting, warm golden lighting, rich oranges and deep purples, peaceful and awe-inspiring atmosphere, highly detailed, photorealistic, 8K resolution\",\n      \"scaffold\": {\n        \"subject\": \"Majestic mountain landscape\",\n        \"context\": \"at golden hour sunset, dramatic peaks silhouetted against vibrant sky\",\n        \"style\": \"photorealistic, highly detailed\",\n        \"colors\": \"warm golden lighting, rich oranges and deep purples\",\n        \"lighting\": \"golden hour, dramatic backlighting\",\n        \"atmosphere\": \"peaceful and awe-inspiring\",\n        \"qualifiers\": \"8K resolution, professional photography\"\n      },\n      \"metadata\": {\n        \"model\": \"gemini-1.5-pro\",\n        \"createdAt\": \"2024-01-15T10:30:00Z\",\n        \"tokensUsed\": 150\n      }\n    },\n    \"suggestions\": [\n      \"Consider specifying the time of year (spring snow, autumn colors)\",\n      \"Add details about weather conditions (clear sky, misty clouds)\",\n      \"Specify the viewing perspective (aerial view, ground level)\"\n    ],\n    \"clarifyingQuestions\": [\n      {\n        \"id\": \"lighting-1\",\n        \"question\": \"What type of lighting mood are you looking for?\",\n        \"options\": [\"Dramatic\", \"Soft\", \"Moody\", \"Bright\"]\n      },\n      {\n        \"id\": \"season-1\",\n        \"question\": \"What season should this landscape represent?\",\n        \"options\": [\"Spring\", \"Summer\", \"Autumn\", \"Winter\"]\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Generate Prompt with Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Create a similar landscape but with different lighting\",\n  \"apiKey\": \"{{geminiApiKey}}\",\n  \"images\": [\n    \"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gemini/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gemini", "generate"]
+            },
+            "description": "Generate a prompt with image context using Gemini Vision"
+          }
+        },
+        {
+          "name": "Analyze Generated Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageData\": \"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=\",\n  \"originalPrompt\": \"Majestic mountain landscape at golden hour sunset, dramatic peaks silhouetted against vibrant orange and pink sky, serene alpine setting, warm golden lighting, rich oranges and deep purples, peaceful and awe-inspiring atmosphere, highly detailed, photorealistic, 8K resolution\",\n  \"apiKey\": \"{{geminiApiKey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gemini/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gemini", "analyze"]
+            },
+            "description": "Analyze a generated image and compare it with the original prompt"
+          },
+          "response": [
+            {
+              "name": "Successful Analysis",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"imageData\": \"data:image/jpeg;base64,valid-base64-image\",\n  \"originalPrompt\": \"Majestic mountain landscape at sunset\",\n  \"apiKey\": \"valid-api-key\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/gemini/analyze",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "gemini", "analyze"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"description\": \"A stunning mountain landscape photograph showing snow-capped peaks during golden hour. The image features dramatic lighting with warm orange and pink hues in the sky, creating silhouettes of the mountain ridges. The composition includes multiple layers of mountains receding into the distance.\",\n    \"tokenComparison\": [\n      {\n        \"token\": \"majestic\",\n        \"present\": true,\n        \"confidence\": 0.9,\n        \"description\": \"The mountain peaks appear grand and impressive\"\n      },\n      {\n        \"token\": \"golden hour\",\n        \"present\": true,\n        \"confidence\": 0.95,\n        \"description\": \"Clear golden hour lighting is visible\"\n      },\n      {\n        \"token\": \"dramatic peaks\",\n        \"present\": true,\n        \"confidence\": 0.85,\n        \"description\": \"Mountain silhouettes are clearly dramatic\"\n      },\n      {\n        \"token\": \"vibrant orange and pink\",\n        \"present\": false,\n        \"confidence\": 0.3,\n        \"description\": \"Colors are more muted than vibrant\"\n      }\n    ],\n    \"suggestions\": [\n      \"The colors appear more muted than described. Consider adjusting color intensity in your prompt.\",\n      \"The 'vibrant' aspect could be enhanced - try adding terms like 'saturated colors' or 'intense hues'.\",\n      \"Consider specifying 'dramatic contrast' to enhance the silhouette effect.\"\n    ],\n    \"overallMatch\": 0.78,\n    \"improvementAreas\": [\n      \"Color vibrancy\",\n      \"Atmospheric effects\",\n      \"Contrast enhancement\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Error - Missing API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A beautiful landscape\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gemini/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gemini", "generate"]
+            },
+            "description": "Test error handling when API key is missing"
+          },
+          "response": [
+            {
+              "name": "Missing API Key Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"prompt\": \"A beautiful landscape\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/gemini/generate",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "gemini", "generate"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"message\": \"API key is required\",\n    \"code\": \"MISSING_API_KEY\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Error - Invalid API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A beautiful landscape\",\n  \"apiKey\": \"invalid-key\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/gemini/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "gemini", "generate"]
+            },
+            "description": "Test error handling with invalid API key"
+          },
+          "response": [
+            {
+              "name": "Invalid API Key Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"prompt\": \"A beautiful landscape\",\n  \"apiKey\": \"invalid-key\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/gemini/generate",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "gemini", "generate"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"message\": \"Invalid API key provided\",\n    \"code\": \"INVALID_API_KEY\"\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoints for interacting with Google Gemini API for prompt generation and image analysis"
+    },
+    {
+      "name": "Google Drive API",
+      "item": [
+        {
+          "name": "Save Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}",
+                "description": "User's Google Drive access token (obtained through Clerk)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatHistory\": [\n    {\n      \"id\": \"msg-1\",\n      \"type\": \"user\",\n      \"content\": \"Create a mountain landscape\",\n      \"timestamp\": \"2024-01-15T10:30:00Z\"\n    },\n    {\n      \"id\": \"msg-2\",\n      \"type\": \"assistant\",\n      \"content\": {\n        \"generatedPrompt\": {\n          \"rawText\": \"Majestic mountain landscape...\",\n          \"scaffold\": {...}\n        }\n      },\n      \"timestamp\": \"2024-01-15T10:30:15Z\"\n    }\n  ],\n  \"customFormats\": [\n    {\n      \"id\": \"custom-1\",\n      \"name\": \"My Custom Format\",\n      \"template\": \"{subject} in {style}, {colors} lighting, {atmosphere}, {qualifiers}\",\n      \"description\": \"Custom format for my specific needs\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drive/save",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "drive", "save"]
+            },
+            "description": "Save chat history and custom formats to Google Drive AppDataFolder"
+          }
+        },
+        {
+          "name": "Load Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}",
+                "description": "User's Google Drive access token (obtained through Clerk)"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/drive/load",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "drive", "load"]
+            },
+            "description": "Load user's chat history and custom formats from Google Drive"
+          },
+          "response": [
+            {
+              "name": "Successful Load",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer valid-access-token"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/drive/load",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "drive", "load"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"chatHistory\": [...],\n    \"customFormats\": [...],\n    \"lastModified\": \"2024-01-15T10:30:00Z\"\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoints for Google Drive integration (requires user authentication)"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set dynamic variables",
+          "if (!pm.environment.get('geminiApiKey')) {",
+          "    console.log('Please set your Gemini API key in the environment variables');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+          "});",
+          "",
+          "pm.test('Response has JSON body', function () {",
+          "    pm.response.to.have.jsonBody();",
+          "});",
+          "",
+          "// Log response for debugging",
+          "console.log('Response:', pm.response.json());"
+        ]
+      }
+    }
+  ]
+}
