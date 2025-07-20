@@ -5,6 +5,7 @@ import { ChatWindow } from '@/components/ChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
 import { ModernHeader } from '@/components/ModernHeader'
 import { ModernSidebar } from '@/components/ModernSidebar'
+import { StaggerContainer, StaggerItem } from '@/components/PageTransition'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
 
@@ -26,10 +27,9 @@ export default function ChatPage() {
       <ModernHeader />
       
       {/* Main Container with Glass Morphism */}
-      <motion.main 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+      <StaggerContainer 
+        delay={0.2}
+        staggerDelay={0.15}
         className="relative"
       >
         {/* Background Pattern */}
@@ -40,12 +40,7 @@ export default function ChatPage() {
             {/* Modern Grid Layout */}
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-180px)]">
               {/* Main Chat Interface - Takes up most space */}
-              <motion.div 
-                className="xl:col-span-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
+              <StaggerItem className="xl:col-span-3">
                 <div className="glass-card h-full overflow-hidden hover-glow">
                   <ChatWindow 
                     onPromptGenerated={handlePromptGenerated}
@@ -53,26 +48,22 @@ export default function ChatPage() {
                     showPromptGenerator={true}
                   />
                 </div>
-              </motion.div>
+              </StaggerItem>
               
               {/* Desktop Sidebar */}
               <div className="hidden xl:block xl:col-span-1">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
+                <StaggerItem>
                   <ModernSidebar
                     currentPrompt={currentPrompt}
                     isOpen={true}
                     onToggle={toggleSidebar}
                   />
-                </motion.div>
+                </StaggerItem>
               </div>
             </div>
           </ApiKeyGuard>
         </div>
-      </motion.main>
+      </StaggerContainer>
 
       {/* Mobile Sidebar */}
       <ModernSidebar
