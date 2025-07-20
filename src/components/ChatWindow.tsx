@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { ModernChatInput } from '@/components/ModernChatInput';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChatMessage, GeneratedPrompt } from '@/types';
@@ -12,16 +12,12 @@ import { useApiKey } from '@/hooks/useApiKey';
 import { useChatPersistence } from '@/hooks/useDrivePersistence';
 import { ModernMessageBubble } from '@/components/ModernMessageBubble';
 import { ModernTypingIndicator } from '@/components/ModernTypingIndicator';
-import { ImageDropZone } from '@/components/ImageDropZone';
+
 import { PromptGenerator } from '@/components/PromptGenerator';
 import { DriveStatus } from '@/components/DriveStatus';
 import { 
-  Send, 
   Bot, 
-  AlertCircle,
-  Image as ImageIcon,
-  Plus,
-  Minus
+  AlertCircle
 } from 'lucide-react';
 
 interface ChatWindowProps {
@@ -39,7 +35,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const { hasValidKey } = useApiKey();
   const { messages, addMessage, clearMessages, isLoading: isDriveLoading } = useChatPersistence();
 
@@ -48,13 +44,7 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [inputValue]);
+
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || !hasValidKey) return;
@@ -307,66 +297,20 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="p-4 border-t bg-white space-y-3">
-          {/* Image Drop Zone */}
-          {showImageDropZone && (
-            <ImageDropZone
-              onImagesChange={handleImagesChange}
-              maxImages={3}
-              disabled={isLoading}
-            />
-          )}
-
-          {/* Text Input */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Textarea
-                ref={textareaRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Describe the image you want to create..."
-                className="min-h-[60px] max-h-[120px] resize-none"
-                disabled={isLoading}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowImageDropZone(!showImageDropZone)}
-                disabled={isLoading}
-                className="self-start"
-              >
-                {showImageDropZone ? (
-                  <Minus className="h-4 w-4" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-                className="self-end"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center gap-4">
-              <span>Press Enter to send, Shift+Enter for new line</span>
-              {images.length > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  <ImageIcon className="h-3 w-3 mr-1" />
-                  {images.length} image{images.length > 1 ? 's' : ''}
-                </Badge>
-              )}
-            </div>
-            <span>{inputValue.length}/2000</span>
-          </div>
+        {/* Modern Input Area */}
+        <div className="p-6 border-t bg-gradient-to-r from-gray-50/50 to-blue-50/30">
+          <ModernChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSendMessage}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+            images={images}
+            onImagesChange={handleImagesChange}
+            showImageDropZone={showImageDropZone}
+            onToggleImageDropZone={() => setShowImageDropZone(!showImageDropZone)}
+            maxLength={2000}
+          />
         </div>
 
         {/* Prompt Generator */}
