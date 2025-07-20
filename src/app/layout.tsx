@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DataCleaner } from '@/components/DataCleaner';
 import { PageTransition } from '@/components/PageTransition';
 import { RouteTransition } from '@/components/RouteTransition';
+import { FloatingApiKeyTrigger } from '@/components/FloatingApiKeyTrigger';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -129,6 +130,9 @@ export default function RootLayout({
                   {children}
                 </PageTransition>
               </RouteTransition>
+              
+              {/* Floating API Key Manager */}
+              <FloatingApiKeyTrigger position="top-right" />
             </div>
           </ErrorBoundary>
           
