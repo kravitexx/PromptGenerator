@@ -2,204 +2,173 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { 
-  Bot, 
+  Loader2, 
   AlertCircle, 
-  RefreshCw, 
+  CheckCircle, 
+  RefreshCw,
   Wifi,
   WifiOff,
-  Loader2
+  Bot,
+  MessageSquare,
+  Zap,
+  Brain,
+  Sparkles
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// Skeleton Message Component
+// Enhanced Skeleton Message Component
 export function SkeletonMessage({ isUser = false }: { isUser?: boolean }) {
-  const skeletonVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.4,
-        ease: 'easeOut'
-      }
+  return (
+    <motion.div 
+      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      {!isUser && (
+        <div className="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full relative overflow-hidden">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
+      )}
+      
+      <div className={`max-w-[80%] ${isUser ? 'order-2' : ''}`}>
+        <div className={`rounded-2xl p-4 relative overflow-hidden ${
+          isUser 
+            ? 'bg-gradient-to-br from-blue-200/50 to-purple-200/50' 
+            : 'bg-gradient-to-br from-gray-100 to-gray-200'
+        }`}>
+          {/* Shimmer overlay */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          
+          <div className="space-y-3 relative z-10">
+            {[100, 75, 50].map((width, index) => (
+              <motion.div
+                key={index}
+                className="h-4 bg-gray-300/70 rounded"
+                style={{ width: `${width}%` }}
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: index * 0.2,
+                  ease: 'easeInOut'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {isUser && (
+        <div className="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full relative overflow-hidden order-3">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// Enhanced Error State Component
+export function ErrorState({ 
+  message = "Something went wrong", 
+  onRetry,
+  className = "",
+  type = 'error'
+}: {
+  message?: string;
+  onRetry?: () => void;
+  className?: string;
+  type?: 'error' | 'network' | 'timeout';
+}) {
+  const getIcon = () => {
+    switch (type) {
+      case 'network':
+        return <WifiOff className="h-12 w-12 text-orange-500 mb-4" />;
+      case 'timeout':
+        return <Loader2 className="h-12 w-12 text-yellow-500 mb-4" />;
+      default:
+        return <AlertCircle className="h-12 w-12 text-red-500 mb-4" />;
     }
   };
 
-  const shimmerVariants = {
-    animate: {
-      x: ['-100%', '100%'],
-      transition: {
-        duration: 1.5,
-        repeat: Infinity,
-        ease: 'easeInOut'
-      }
+  const getTitle = () => {
+    switch (type) {
+      case 'network':
+        return 'Connection Lost';
+      case 'timeout':
+        return 'Request Timeout';
+      default:
+        return 'Oops!';
     }
   };
 
   return (
     <motion.div 
-      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-      variants={skeletonVariants}
-      initial="initial"
-      animate="animate"
-    >
-      {/* Avatar skeleton */}
-      {!isUser && (
-        <div className="flex-shrink-0">
-          <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
-        </div>
-      )}
-      
-      <div className={`max-w-[80%] space-y-2 ${isUser ? 'order-2' : ''}`}>
-        {/* Message bubble skeleton */}
-        <div className={`relative overflow-hidden rounded-2xl p-4 ${
-          isUser 
-            ? 'bg-gray-200 rounded-br-md' 
-            : 'bg-gray-100 rounded-bl-md'
-        }`}>
-          {/* Shimmer effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent"
-            variants={shimmerVariants}
-            animate="animate"
-          />
-          
-          {/* Content lines */}
-          <div className="space-y-2 relative z-10">
-            <div className="h-4 bg-gray-300 rounded animate-pulse" />
-            <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse" />
-            <div className="h-4 bg-gray-300 rounded w-1/2 animate-pulse" />
-          </div>
-        </div>
-        
-        {/* Metadata skeleton */}
-        <div className={`flex items-center gap-2 px-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-          <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
-        </div>
-      </div>
-
-      {/* User avatar skeleton */}
-      {isUser && (
-        <div className="flex-shrink-0 order-3">
-          <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// Enhanced Loading Spinner
-export function LoadingSpinner({ 
-  size = 'md', 
-  text = 'Loading...',
-  showText = true 
-}: { 
-  size?: 'sm' | 'md' | 'lg';
-  text?: string;
-  showText?: boolean;
-}) {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8'
-  };
-
-  return (
-    <motion.div
-      className="flex items-center justify-center gap-3 p-4"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.3 }}
-    >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-      >
-        <Loader2 className={`${sizeClasses[size]} text-blue-500`} />
-      </motion.div>
-      
-      {showText && (
-        <motion.span
-          className="text-sm text-gray-600 font-medium"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          {text}
-        </motion.span>
-      )}
-      
-      {/* Animated dots */}
-      <div className="flex gap-1">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-1 h-1 bg-blue-500 rounded-full"
-            animate={{
-              scale: [1, 1.5, 1],
-              opacity: [0.4, 1, 0.4]
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              delay: i * 0.2,
-              ease: 'easeInOut'
-            }}
-          />
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// Error State Component
-export function ErrorState({ 
-  message = 'Something went wrong',
-  onRetry,
-  showRetry = true 
-}: {
-  message?: string;
-  onRetry?: () => void;
-  showRetry?: boolean;
-}) {
-  return (
-    <motion.div
-      className="flex flex-col items-center justify-center p-8 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
+      className={`flex flex-col items-center justify-center p-8 text-center ${className}`}
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <motion.div
         animate={{ 
-          rotate: [0, -10, 10, 0],
-          scale: [1, 1.1, 1]
+          rotate: [0, 5, -5, 0],
+          scale: [1, 1.05, 1]
         }}
         transition={{ 
-          duration: 2,
+          duration: 3,
           repeat: Infinity,
           ease: 'easeInOut'
         }}
       >
-        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        {getIcon()}
       </motion.div>
       
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Oops!</h3>
-      <p className="text-gray-600 mb-4 max-w-sm">{message}</p>
+      <motion.h3 
+        className="text-lg font-semibold text-gray-800 mb-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        {getTitle()}
+      </motion.h3>
       
-      {showRetry && onRetry && (
+      <motion.p 
+        className="text-gray-600 mb-6 max-w-md leading-relaxed"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        {message}
+      </motion.p>
+      
+      {onRetry && (
         <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <Button
-            onClick={onRetry}
-            variant="outline"
-            className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={onRetry} variant="outline" className="gap-2 hover:bg-blue-50">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </motion.div>
             Try Again
           </Button>
         </motion.div>
@@ -208,203 +177,216 @@ export function ErrorState({
   );
 }
 
-// Connection Status Component
+// Enhanced Connection Status Component
 export function ConnectionStatus({ 
   isConnected = true,
-  isReconnecting = false 
+  className = "",
+  showLabel = true
 }: {
   isConnected?: boolean;
-  isReconnecting?: boolean;
+  className?: string;
+  showLabel?: boolean;
 }) {
   return (
-    <AnimatePresence>
-      {(!isConnected || isReconnecting) && (
-        <motion.div
-          className="fixed top-4 right-4 z-50"
-          initial={{ opacity: 0, y: -20, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.8 }}
-          transition={{ duration: 0.3 }}
+    <motion.div 
+      className={`flex items-center gap-2 text-xs ${className}`}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        animate={isConnected ? 
+          { scale: [1, 1.2, 1] } : 
+          { rotate: 360, scale: [1, 1.1, 1] }
+        }
+        transition={{ 
+          duration: isConnected ? 2 : 1,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }}
+      >
+        {isConnected ? (
+          <Wifi className="h-3 w-3 text-green-500" />
+        ) : (
+          <WifiOff className="h-3 w-3 text-red-500" />
+        )}
+      </motion.div>
+      
+      {showLabel && (
+        <motion.span 
+          className={isConnected ? 'text-green-600' : 'text-red-600'}
+          animate={!isConnected ? { opacity: [0.5, 1, 0.5] } : {}}
+          transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg ${
-            isReconnecting 
-              ? 'bg-yellow-100 border border-yellow-200 text-yellow-800'
-              : 'bg-red-100 border border-red-200 text-red-800'
-          }`}>
-            <motion.div
-              animate={isReconnecting ? { rotate: 360 } : {}}
-              transition={isReconnecting ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
-            >
-              {isReconnecting ? (
-                <RefreshCw className="h-4 w-4" />
-              ) : isConnected ? (
-                <Wifi className="h-4 w-4" />
-              ) : (
-                <WifiOff className="h-4 w-4" />
-              )}
-            </motion.div>
-            <span className="text-sm font-medium">
-              {isReconnecting ? 'Reconnecting...' : 'Connection lost'}
-            </span>
-          </div>
-        </motion.div>
+          {isConnected ? 'Connected' : 'Reconnecting...'}
+        </motion.span>
       )}
-    </AnimatePresence>
+    </motion.div>
   );
 }
 
-// Message Loading Placeholder
-export function MessageLoadingPlaceholder() {
+// Enhanced Message Loading Placeholder
+export function MessageLoadingPlaceholder({ stage = 'thinking' }: { stage?: 'thinking' | 'processing' | 'generating' }) {
+  const getStageInfo = () => {
+    switch (stage) {
+      case 'processing':
+        return { icon: Brain, text: 'Processing your request...', color: 'text-purple-600' };
+      case 'generating':
+        return { icon: Sparkles, text: 'Generating response...', color: 'text-green-600' };
+      default:
+        return { icon: Bot, text: 'AI is thinking...', color: 'text-blue-600' };
+    }
+  };
+
+  const { icon: Icon, text, color } = getStageInfo();
+
   return (
-    <motion.div
+    <motion.div 
       className="flex gap-3 justify-start"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 1.05 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* Bot avatar */}
-      <div className="flex-shrink-0">
-        <motion.div 
-          className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-md ring-2 ring-white"
+      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-md">
+        <motion.div
           animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0]
+            rotate: 360,
+            scale: [1, 1.1, 1]
           }}
           transition={{ 
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut'
+            rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+            scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
           }}
         >
-          <Bot className="h-5 w-5 text-blue-600" />
+          <Icon className={`h-5 w-5 ${color}`} />
         </motion.div>
       </div>
       
       <div className="max-w-[80%]">
-        {/* Animated thinking bubble */}
-        <motion.div 
-          className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl rounded-bl-md p-4 shadow-lg border border-gray-200/50 overflow-hidden"
-          animate={{
-            boxShadow: [
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            ]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut'
-          }}
-        >
-          {/* Shimmer effect */}
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl rounded-bl-md p-4 border border-gray-200/50 relative overflow-hidden shadow-sm">
+          {/* Animated background */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-blue-50/30 via-purple-50/30 to-blue-50/30"
             animate={{ x: ['-100%', '100%'] }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           />
           
-          {/* Content skeleton */}
-          <div className="relative z-10 space-y-2">
-            <div className="flex items-center gap-2 mb-3">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-              >
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-              </motion.div>
-              <span className="text-sm text-gray-600">AI is analyzing your request...</span>
-            </div>
+          <div className="flex items-center gap-3 relative z-10">
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <Loader2 className={`h-4 w-4 ${color} animate-spin`} />
+            </motion.div>
             
-            <div className="space-y-2">
-              <motion.div 
-                className="h-3 bg-gray-300 rounded"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              <motion.div 
-                className="h-3 bg-gray-300 rounded w-3/4"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-              />
-              <motion.div 
-                className="h-3 bg-gray-300 rounded w-1/2"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-              />
+            <span className="text-sm text-gray-700 font-medium">{text}</span>
+            
+            {/* Animated dots */}
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-1 h-1 bg-gray-400 rounded-full"
+                  animate={{
+                    y: [-2, 0, -2],
+                    opacity: [0.4, 1, 0.4]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                    ease: 'easeInOut'
+                  }}
+                />
+              ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-// Chat Loading Screen
+// Enhanced Chat Loading Screen
 export function ChatLoadingScreen() {
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center h-64 p-8"
+    <motion.div 
+      className="flex flex-col items-center justify-center h-96 space-y-8"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
     >
+      {/* Animated logo */}
       <motion.div
+        className="relative"
         animate={{ 
           rotate: [0, 360],
           scale: [1, 1.1, 1]
         }}
         transition={{ 
-          duration: 3,
-          repeat: Infinity,
-          ease: 'easeInOut'
+          rotate: { duration: 4, repeat: Infinity, ease: 'linear' },
+          scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' }
         }}
       >
-        <Bot className="h-16 w-16 text-blue-500 mb-6" />
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <MessageSquare className="h-10 w-10 text-white" />
+        </div>
+        
+        {/* Floating particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-blue-400/60 rounded-full"
+            style={{
+              left: `${Math.cos(i * 60 * Math.PI / 180) * 40 + 40}px`,
+              top: `${Math.sin(i * 60 * Math.PI / 180) * 40 + 40}px`
+            }}
+            animate={{
+              scale: [0, 1, 0],
+              opacity: [0, 0.8, 0]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              delay: i * 0.3,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
       </motion.div>
       
-      <motion.h3 
-        className="text-xl font-bold text-gray-700 mb-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        Loading Chat
-      </motion.h3>
-      
-      <motion.p 
-        className="text-gray-600 text-center max-w-sm"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        Preparing your AI assistant and loading conversation history...
-      </motion.p>
-      
+      {/* Loading text */}
       <motion.div 
-        className="flex gap-2 mt-6"
+        className="text-center space-y-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
+        <h3 className="text-xl font-bold text-gray-800">Loading Chat</h3>
+        <p className="text-gray-600 max-w-md">Preparing your AI assistant and loading conversation history...</p>
+      </motion.div>
+      
+      {/* Progress indicator */}
+      <motion.div 
+        className="flex gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.7 }}
+        transition={{ delay: 0.5 }}
       >
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <motion.div
             key={i}
             className="w-2 h-2 bg-blue-500 rounded-full"
             animate={{
-              y: [-4, 0, -4],
-              opacity: [0.4, 1, 0.4]
+              y: [-8, 0, -8],
+              opacity: [0.3, 1, 0.3],
+              scale: [0.8, 1.2, 0.8]
             }}
             transition={{
-              duration: 1.5,
+              duration: 1.8,
               repeat: Infinity,
-              delay: i * 0.2,
+              delay: i * 0.15,
               ease: 'easeInOut'
             }}
           />
@@ -414,41 +396,102 @@ export function ChatLoadingScreen() {
   );
 }
 
-// Smooth Loading Transition
+// Enhanced Smooth Loading Transition
 export function SmoothLoadingTransition({ 
   isLoading, 
   children, 
   fallback,
-  delay = 0 
+  loadingText = "Loading..."
 }: {
   isLoading: boolean;
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  delay?: number;
+  loadingText?: string;
 }) {
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
         <motion.div
           key="loading"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.3, delay }}
+          initial={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 1.05, filter: 'blur(2px)' }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          {fallback || <LoadingSpinner />}
+          {fallback || <ChatLoadingScreen />}
         </motion.div>
       ) : (
         <motion.div
           key="content"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.95, filter: 'blur(2px)' }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           {children}
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+// Success State Component
+export function SuccessState({ 
+  message = "Success!", 
+  onContinue,
+  className = ""
+}: {
+  message?: string;
+  onContinue?: () => void;
+  className?: string;
+}) {
+  return (
+    <motion.div 
+      className={`flex flex-col items-center justify-center p-8 text-center ${className}`}
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 10 }}
+      >
+        <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+      </motion.div>
+      
+      <motion.h3 
+        className="text-xl font-bold text-gray-800 mb-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        All Set!
+      </motion.h3>
+      
+      <motion.p 
+        className="text-gray-600 mb-6 max-w-md"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        {message}
+      </motion.p>
+      
+      {onContinue && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button onClick={onContinue} className="gap-2">
+            <Zap className="h-4 w-4" />
+            Continue
+          </Button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }

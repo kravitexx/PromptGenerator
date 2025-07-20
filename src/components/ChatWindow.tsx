@@ -43,11 +43,20 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   const [images, setImages] = useState<string[]>([]);
   const [showImageDropZone, setShowImageDropZone] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { hasValidKey } = useApiKey();
   const { messages, addMessage, clearMessages, isLoading: isDriveLoading } = useChatPersistence();
+
+  // Initialize chat
+  useEffect(() => {
+    const initTimer = setTimeout(() => {
+      setIsInitializing(false);
+    }, 1500);
+    return () => clearTimeout(initTimer);
+  }, []);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -142,12 +151,12 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   if (!hasValidKey) {
     return (
       <Card className={className}>
-        <CardContent className="p-6 text-center">
-          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">API Key Required</h3>
-          <p className="text-gray-600">
-            Please configure your Gemini API key to start using the chat interface.
-          </p>
+        <CardContent className="p-6">
+          <ErrorState
+            message="Please configure your Gemini API key to start using the chat interface."
+            type="error"
+            className="py-8"
+          />
         </CardContent>
       </Card>
     );
@@ -156,6 +165,8 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   return (
     <Card className={className}>
       <CardContent className="p-0 flex flex-col h-full">
+        <SmoothLoadingTransition isLoading={isInitializing}>
+          <div className="flex flex-col h-full">
         {/* Modern Chat Header */}
         <div className="p-4 border-b bg-gradient-to-r from-blue-50/50 to-purple-50/50 backdrop-blur-sm flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -291,20 +302,30 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
           )}
           
           {isLoading && (
-            <ModernTypingIndicator />
+            <MessageLoadingPlaceholder stage="processing" />
           )}
           
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Error Display */}
+        {/* Enhanced Error Display */}
         {error && (
-          <div className="px-4 py-2 bg-red-50 border-t border-red-200">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">{error}</span>
-            </div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t"
+          >
+            <ErrorState
+              message={error}
+              onRetry={() => {
+                setError(null);
+                handleSendMessage();
+              }}
+              type={error.includes('network') ? 'network' : error.includes('timeout') ? 'timeout' : 'error'}
+              className="py-4"
+            />
+          </motion.div>
         )}
 
         {/* Modern Input Area */}
@@ -332,6 +353,8 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
             />
           </div>
         )}
+          </div>
+        </SmoothLoadingTransition>
       </CardContent>
     </Card>
   );
