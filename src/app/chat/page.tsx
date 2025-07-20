@@ -1,90 +1,86 @@
 'use client';
 
-import { UserButton } from '@clerk/nextjs'
+import { motion } from 'framer-motion';
 import { ChatWindow } from '@/components/ChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
-import { DriveStatus } from '@/components/DriveStatus'
-import { ApiKeyManager } from '@/components/ApiKeyManager'
+import { ModernHeader } from '@/components/ModernHeader'
+import { ModernSidebar } from '@/components/ModernSidebar'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
-import { formatDate } from '@/lib/utils'
 
 export default function ChatPage() {
   const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handlePromptGenerated = (prompt: GeneratedPrompt) => {
     setCurrentPrompt(prompt);
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
-                Prompt Generator
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <ApiKeyManager compact />
-              <DriveStatus />
-              {process.env.NODE_ENV === 'development' && (
-                <button
-                  onClick={() => {
-                    localStorage.clear();
-                    window.location.reload();
-                  }}
-                  className="text-xs bg-red-500 text-white px-2 py-1 rounded"
-                  title="Clear localStorage (Dev only)"
-                >
-                  Clear Data
-                </button>
-              )}
-              <UserButton 
-                appearance={{
-                  elements: {
-                    avatarBox: "h-8 w-8"
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Modern Header */}
+      <ModernHeader />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ApiKeyGuard>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Chat Interface */}
-            <div className="lg:col-span-2">
-              <ChatWindow 
-                onPromptGenerated={handlePromptGenerated}
-                className="h-[calc(100vh-200px)]"
-                showPromptGenerator={true}
-              />
-            </div>
-            
-            {/* Sidebar with API Key, Drive Status and Info */}
-            <div className="space-y-6">
-              <ApiKeyManager />
-              <DriveStatus showDetails={true} />
-              
-              {currentPrompt && (
-                <div className="bg-white rounded-lg shadow-sm p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Current Prompt</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Model: {currentPrompt.metadata.model}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Generated: {formatDate(currentPrompt.metadata.createdAt)}
-                  </p>
+      {/* Main Container with Glass Morphism */}
+      <motion.main 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="relative"
+      >
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ApiKeyGuard>
+            {/* Modern Grid Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-180px)]">
+              {/* Main Chat Interface - Takes up most space */}
+              <motion.div 
+                className="xl:col-span-3"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div className="glass-card h-full overflow-hidden hover-glow">
+                  <ChatWindow 
+                    onPromptGenerated={handlePromptGenerated}
+                    className="h-full"
+                    showPromptGenerator={true}
+                  />
                 </div>
-              )}
+              </motion.div>
+              
+              {/* Desktop Sidebar */}
+              <div className="hidden xl:block xl:col-span-1">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <ModernSidebar
+                    currentPrompt={currentPrompt}
+                    isOpen={true}
+                    onToggle={toggleSidebar}
+                  />
+                </motion.div>
+              </div>
             </div>
-          </div>
-        </ApiKeyGuard>
-      </main>
+          </ApiKeyGuard>
+        </div>
+      </motion.main>
+
+      {/* Mobile Sidebar */}
+      <ModernSidebar
+        currentPrompt={currentPrompt}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        className="xl:hidden"
+      />
     </div>
   )
 }
