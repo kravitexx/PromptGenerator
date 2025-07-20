@@ -161,6 +161,37 @@ module.exports = {
         '.gradient-accent': {
           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
         },
+        '.glass-card': {
+          background: 'rgba(255, 255, 255, 0.1)',
+          'backdrop-filter': 'blur(16px)',
+          '-webkit-backdrop-filter': 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          'border-radius': '12px',
+          'box-shadow': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+        },
+        '.hover-lift': {
+          transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
+        },
+        '.hover-lift:hover': {
+          transform: 'translateY(-2px)',
+          'box-shadow': '0 12px 40px 0 rgba(31, 38, 135, 0.5)',
+        },
+        '.hover-glow': {
+          transition: 'box-shadow 0.3s ease-out',
+        },
+        '.hover-glow:hover': {
+          'box-shadow': '0 0 30px rgba(59, 130, 246, 0.3)',
+        },
+        '.text-gradient': {
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          '-webkit-background-clip': 'text',
+          'background-clip': 'text',
+          '-webkit-text-fill-color': 'transparent',
+        },
+        '.bg-grid-pattern': {
+          'background-image': 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          'background-size': '20px 20px',
+        },
       }
       addUtilities(newUtilities)
     }

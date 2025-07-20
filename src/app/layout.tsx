@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DataCleaner } from '@/components/DataCleaner';
 import { PageTransition } from '@/components/PageTransition';
+import { RouteTransition } from '@/components/RouteTransition';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -123,9 +124,11 @@ export default function RootLayout({
             </a>
             
             <div id="main-content">
-              <PageTransition>
-                {children}
-              </PageTransition>
+              <RouteTransition>
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </RouteTransition>
             </div>
           </ErrorBoundary>
           
