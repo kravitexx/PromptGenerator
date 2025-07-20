@@ -38,6 +38,23 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
+    // Check if this is a date-related error
+    const isDateError = error.message.includes('Invalid time value') || 
+                       error.message.includes('Invalid Date') ||
+                       error.name === 'RangeError';
+    
+    if (isDateError) {
+      console.log('Date-related error detected, clearing corrupted data...');
+      try {
+        // Clear potentially corrupted localStorage data
+        localStorage.removeItem('chat_messages');
+        localStorage.removeItem('data_cleaned'); // Force data cleaning on next load
+        console.log('Cleared corrupted data from localStorage');
+      } catch (clearError) {
+        console.warn('Failed to clear localStorage:', clearError);
+      }
+    }
+    
     this.setState({
       error,
       errorInfo,
@@ -56,11 +73,22 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
+    // Check if this was a date-related error
+    const isDateError = this.state.error?.message.includes('Invalid time value') || 
+                       this.state.error?.message.includes('Invalid Date') ||
+                       this.state.error?.name === 'RangeError';
+    
+    if (isDateError) {
+      // For date errors, reload the page to ensure clean state
+      window.location.reload();
+    } else {
+      // For other errors, just reset the error boundary
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+      });
+    }
   };
 
   handleGoHome = () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getStoredApiKey, testGeminiApiKey, testGeminiApiKeyAlternative } from '@/lib/gemini';
+import { getStoredApiKey, testGeminiApiKey, testGeminiApiKeyAlternative, testGeminiApiKeyMinimal } from '@/lib/gemini';
 
 export interface ApiKeyState {
   apiKey: string | null;
@@ -69,16 +69,12 @@ export function useApiKey() {
         return false;
       }
 
+      // More lenient format validation - warn but don't block
       if (!newApiKey.startsWith('AIzaSy')) {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: 'Invalid API key format. Gemini API keys should start with "AIzaSy"',
-        }));
-        return false;
+        console.warn('API key format may be incorrect. Gemini API keys typically start with "AIzaSy"');
       }
 
-      if (newApiKey.length < 35) {
+      if (newApiKey.length < 20) {
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -87,13 +83,16 @@ export function useApiKey() {
         return false;
       }
 
-      // Try primary validation method
-      let isValid = await testGeminiApiKey(newApiKey);
+      // Try multiple validation methods - start with quota-free method
+      console.log('Starting API key validation...');
       
-      // If primary method fails, try alternative method
+      // Method 1: Direct API call (doesn't use generation quota)
+      let isValid = await testGeminiApiKeyAlternative(newApiKey);
+      
+      // Only try generation methods if direct API fails
       if (!isValid) {
-        console.log('Primary validation failed, trying alternative method...');
-        isValid = await testGeminiApiKeyAlternative(newApiKey);
+        console.log('Direct API validation failed, trying SDK with Gemini 2.5 Pro...');
+        isValid = await testGeminiApiKey(newApiKey);
       }
       
       if (isValid) {

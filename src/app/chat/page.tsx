@@ -7,6 +7,7 @@ import { DriveStatus } from '@/components/DriveStatus'
 import { ApiKeyManager } from '@/components/ApiKeyManager'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
+import { formatDate } from '@/lib/utils'
 
 export default function ChatPage() {
   const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
@@ -28,6 +29,18 @@ export default function ChatPage() {
             <div className="flex items-center space-x-4">
               <ApiKeyManager compact />
               <DriveStatus />
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                  }}
+                  className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                  title="Clear localStorage (Dev only)"
+                >
+                  Clear Data
+                </button>
+              )}
               <UserButton 
                 appearance={{
                   elements: {
@@ -64,7 +77,7 @@ export default function ChatPage() {
                     Model: {currentPrompt.metadata.model}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Generated: {new Date(currentPrompt.metadata.createdAt).toLocaleString()}
+                    Generated: {formatDate(currentPrompt.metadata.createdAt)}
                   </p>
                 </div>
               )}

@@ -175,24 +175,54 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({
               </Button>
             )}
             
-            {hasValidKey && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={refreshValidation}
-                disabled={isLoading}
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test'}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshValidation}
+              disabled={isLoading || !apiKey}
+              title="Test API key validity"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test'}
+            </Button>
           </div>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-red-700">{error}</span>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <span className="text-sm text-red-700 font-medium">API Key Issue</span>
+            </div>
+            <p className="text-sm text-red-700">{error}</p>
+            <div className="text-xs text-red-600 space-y-1">
+              <p>• Make sure your API key is from Google AI Studio</p>
+              <p>• Verify the key has Gemini API access enabled</p>
+              <p>• Check that your API quota hasn't been exceeded</p>
+            </div>
+            <a 
+              href="https://makersuite.google.com/app/apikey" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+            >
+              Get API Key from Google AI Studio <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+
+        {/* Debug Info (Development Only) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="p-3 bg-gray-100 border rounded-lg">
+            <p className="text-xs font-medium text-gray-700 mb-2">Debug Info:</p>
+            <div className="text-xs text-gray-600 space-y-1">
+              <p>API Key Present: {apiKey ? 'Yes' : 'No'}</p>
+              <p>Key Length: {apiKey ? apiKey.length : 0}</p>
+              <p>Starts with AIzaSy: {apiKey ? (apiKey.startsWith('AIzaSy') ? 'Yes' : 'No') : 'N/A'}</p>
+              <p>Is Valid: {hasValidKey ? 'Yes' : 'No'}</p>
+              <p>Is Loading: {isLoading ? 'Yes' : 'No'}</p>
+              <p>Error: {error || 'None'}</p>
+            </div>
           </div>
         )}
 

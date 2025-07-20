@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DriveData, ChatMessage, CustomFormat, UserPreferences } from '@/types';
+import { deserializeChatMessages } from '@/lib/utils';
 
 interface DriveState {
   isLoading: boolean;
@@ -249,20 +250,34 @@ export function useChatPersistence() {
       if (hasAccess) {
         // Try to load from Drive first
         const loadedMessages = await loadData('chats');
-        setMessages((loadedMessages as ChatMessage[]) || []);
+        setMessages(deserializeChatMessages((loadedMessages as ChatMessage[]) || []));
       } else {
         // Fallback to localStorage
         const localMessages = localStorage.getItem('chat_messages');
         if (localMessages) {
-          setMessages(JSON.parse(localMessages));
+          try {
+            const parsed = JSON.parse(localMessages);
+            setMessages(deserializeChatMessages(parsed));
+          } catch (parseError) {
+            console.error('Failed to parse localStorage messages, clearing corrupted data:', parseError);
+            localStorage.removeItem('chat_messages');
+            setMessages([]);
+          }
         }
       }
     } catch (error) {
       console.warn('Failed to load chat messages from Drive, trying localStorage:', error);
       // Fallback to localStorage
-      const localMessages = localStorage.getItem('chat_messages');
-      if (localMessages) {
-        setMessages(JSON.parse(localMessages));
+      try {
+        const localMessages = localStorage.getItem('chat_messages');
+        if (localMessages) {
+          const parsed = JSON.parse(localMessages);
+          setMessages(deserializeChatMessages(parsed));
+        }
+      } catch (parseError) {
+        console.error('Failed to parse localStorage messages, clearing corrupted data:', parseError);
+        localStorage.removeItem('chat_messages');
+        setMessages([]);
       }
     }
   }, [loadData, hasAccess]);

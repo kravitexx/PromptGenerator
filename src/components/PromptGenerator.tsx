@@ -10,6 +10,7 @@ import { ScaffoldDisplay } from '@/components/ScaffoldDisplay';
 import { PromptImprover } from '@/components/PromptImprover';
 import { ImageFeedbackAnalyzer } from '@/components/ImageFeedbackAnalyzer';
 import { updateGeneratedPrompt } from '@/lib/promptBuilder';
+import { formatDate } from '@/lib/utils';
 import { 
   Wand2, 
   RefreshCw, 
@@ -168,7 +169,7 @@ export function PromptGenerator({
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Created:</span>{' '}
-                {new Date(currentPrompt.metadata.createdAt).toLocaleDateString()}
+                {formatDate(currentPrompt.metadata.createdAt)}
               </div>
               <div className="text-sm text-gray-600">
                 <span className="font-medium">Version:</span>{' '}

@@ -1,11 +1,35 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GeminiRequest, GeminiResponse, ImageAnalysisRequest, ImageAnalysisResponse, GeminiError } from '@/types';
+import { generateId } from '@/lib/utils';
 
-// Gemini API configuration
-const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// Gemini API configuration - Updated to use latest models
+const GEMINI_MODEL = 'gemini-2.5-flash'; // Use Gemini 2.5 Flash as default
+const GEMINI_PRO_MODEL = 'gemini-2.5-pro'; // Use Gemini 2.5 Pro for complex tasks
+
+// Generation configuration for different use cases
+const TEXT_GENERATION_CONFIG = {
+  temperature: 0.7,
+  topK: 40,
+  topP: 0.95,
+  maxOutputTokens: 2048,
+};
+
+const IMAGE_ANALYSIS_CONFIG = {
+  temperature: 0.3,
+  topK: 32,
+  topP: 0.9,
+  maxOutputTokens: 4096,
+};
+
+const CREATIVE_CONFIG = {
+  temperature: 0.9,
+  topK: 50,
+  topP: 0.95,
+  maxOutputTokens: 2048,
+};
 
 /**
- * Tests if a Gemini API key is valid by making a simple API call
+ * Tests if a Gemini API key is valid by making a simple API call using the official SDK
  */
 export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
   try {
@@ -15,14 +39,76 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
       return false;
     }
 
-    if (!apiKey.startsWith('AIzaSy')) {
-      console.error('Invalid API key format. Gemini API keys should start with "AIzaSy"');
+    console.log('Testing API key:', apiKey.substring(0, 10) + '...');
+
+    // Initialize the Google AI SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Use Gemini 2.5 Pro for validation to avoid 1.5 Flash quota limits
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_PRO_MODEL, // Use Pro model for validation
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 5, // Minimal tokens to save quota
+      }
+    });
+
+    console.log('Making test request to Gemini API...');
+
+    // Make a simple test request
+    const result = await model.generateContent('Hi');
+    const response = await result.response;
+    
+    console.log('Response received:', response);
+    
+    // Check if we got a valid response
+    if (response.candidates && response.candidates.length > 0) {
+      const text = response.text();
+      console.log('API key validation successful, response:', text);
+      return true;
+    } else {
+      console.warn('No candidates in response');
       return false;
     }
+  } catch (error) {
+    console.error('API key test failed:', error);
+    
+    // Provide more specific error information
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.substring(0, 200)
+      });
+      
+      if (errorMessage.includes('api key not valid') || errorMessage.includes('invalid api key')) {
+        console.error('API key is invalid');
+      } else if (errorMessage.includes('quota exceeded')) {
+        console.error('API quota exceeded');
+      } else if (errorMessage.includes('permission denied')) {
+        console.error('API key lacks necessary permissions');
+      } else if (errorMessage.includes('fetch')) {
+        console.error('Network error - check internet connection');
+      } else {
+        console.error('Unknown error:', error.message);
+      }
+    }
+    
+    return false;
+  }
+}
 
-    // Use the models list endpoint for validation (simpler and more reliable)
+/**
+ * Alternative API key validation using direct fetch (like your browser test)
+ */
+export async function testGeminiApiKeyAlternative(apiKey: string): Promise<boolean> {
+  try {
+    console.log('Testing API key with direct fetch method...');
+    
+    // Test the same endpoint you used in the browser
     const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
       {
         method: 'GET',
         headers: {
@@ -31,90 +117,54 @@ export async function testGeminiApiKey(apiKey: string): Promise<boolean> {
       }
     );
 
-    console.log('API validation response status:', response.status);
+    console.log('Direct API response status:', response.status);
 
     if (response.ok) {
-      console.log('API key validation successful');
+      const data = await response.json();
+      console.log('Direct API validation successful, models found:', data.models?.length || 0);
       return true;
     } else {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (parseError) {
-        console.error('Failed to parse error response:', parseError);
-        errorData = { error: { message: 'Unknown error' } };
-      }
-      
-      console.error('API key validation failed:', {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Direct API validation failed:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData
       });
-      
-      // Check for specific error types
-      if (response.status === 400) {
-        const errorMessage = errorData.error?.message || '';
-        if (errorMessage.includes('API_KEY_INVALID') || errorMessage.includes('invalid')) {
-          console.error('API key is invalid');
-          return false;
-        }
-      } else if (response.status === 403) {
-        console.error('API key has insufficient permissions or quota exceeded');
-        return false;
-      } else if (response.status === 401) {
-        console.error('API key is unauthorized');
-        return false;
-      }
-      
       return false;
     }
   } catch (error) {
-    console.error('API key test failed with network error:', error);
+    console.error('Direct API key test failed:', error);
     return false;
   }
 }
 
 /**
- * Alternative API key validation using generateContent endpoint
+ * Third validation method using SDK with minimal request
  */
-export async function testGeminiApiKeyAlternative(apiKey: string): Promise<boolean> {
+export async function testGeminiApiKeyMinimal(apiKey: string): Promise<boolean> {
   try {
-    const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: 'test'
-            }]
-          }]
-        }),
-      }
-    );
-
-    // If we get a response (even an error), the API key format is likely correct
-    if (response.status === 200) {
-      return true;
-    } else if (response.status === 400) {
-      // Check if it's a request format issue (key is valid) vs invalid key
-      try {
-        const errorData = await response.json();
-        const errorMessage = errorData.error?.message || '';
-        // If it's not an API key error, the key is probably valid
-        return !errorMessage.toLowerCase().includes('api_key') && 
-               !errorMessage.toLowerCase().includes('invalid');
-      } catch {
-        return false;
-      }
-    }
+    console.log('Testing API key with minimal SDK request...');
     
-    return false;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Use Gemini 2.5 Pro for minimal validation
+    const model = genAI.getGenerativeModel({ model: GEMINI_PRO_MODEL });
+    
+    // Make the smallest possible request
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: 'test' }] }],
+      generationConfig: {
+        maxOutputTokens: 1,
+        temperature: 0,
+      }
+    });
+    
+    const response = await result.response;
+    console.log('Minimal SDK validation response received');
+    
+    return true;
   } catch (error) {
-    console.error('Alternative API key test failed:', error);
+    console.error('Minimal SDK validation failed:', error);
     return false;
   }
 }
@@ -134,26 +184,9 @@ export function hasValidApiKey(): boolean {
   return Boolean(getStoredApiKey());
 }
 
-// Types for Gemini API requests
-interface GeminiTextPart {
-  text: string;
-}
-
-interface GeminiImagePart {
-  inline_data: {
-    mime_type: string;
-    data: string;
-  };
-}
-
-type GeminiPart = GeminiTextPart | GeminiImagePart;
-
-interface GeminiContent {
-  parts: GeminiPart[];
-}
-
 /**
- * Makes a request to the Gemini API for prompt generation
+ * Makes a request to the Gemini API for prompt generation using the official SDK
+ * Enhanced based on official text generation and image understanding documentation
  */
 export async function generatePromptWithGemini(request: GeminiRequest): Promise<GeminiResponse> {
   const { prompt, images, apiKey } = request;
@@ -163,81 +196,100 @@ export async function generatePromptWithGemini(request: GeminiRequest): Promise<
   }
 
   try {
-    const contents: GeminiContent[] = [];
+    // Initialize the Google AI SDK
+    const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Add text prompt
+    // Choose model based on complexity - use 2.5 Pro for image analysis, 2.5 Flash for text-only
+    const modelName = images && images.length > 0 ? GEMINI_PRO_MODEL : GEMINI_MODEL;
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: images && images.length > 0 ? IMAGE_ANALYSIS_CONFIG : TEXT_GENERATION_CONFIG
+    });
+
+    // Prepare the content parts according to official documentation
+    const parts: any[] = [];
+    
+    // Add text prompt first (recommended order)
     if (prompt) {
-      contents.push({
-        parts: [{ text: prompt }]
+      parts.push({ text: prompt });
+    }
+
+    // Add images if provided (following image understanding documentation)
+    if (images && images.length > 0) {
+      images.forEach((base64Image, index) => {
+        // Detect image format from base64 data
+        let mimeType = 'image/jpeg'; // default
+        if (base64Image.startsWith('/9j/')) {
+          mimeType = 'image/jpeg';
+        } else if (base64Image.startsWith('iVBORw0KGgo')) {
+          mimeType = 'image/png';
+        } else if (base64Image.startsWith('R0lGODlh')) {
+          mimeType = 'image/gif';
+        } else if (base64Image.startsWith('UklGR')) {
+          mimeType = 'image/webp';
+        }
+
+        parts.push({
+          inlineData: {
+            mimeType,
+            data: base64Image
+          }
+        });
       });
     }
 
-    // Add images if provided
-    if (images && images.length > 0) {
-      const imageParts: GeminiImagePart[] = images.map(base64Image => ({
-        inline_data: {
-          mime_type: 'image/jpeg', // Assume JPEG for now
-          data: base64Image
-        }
-      }));
-      
-      if (contents.length > 0) {
-        // Add images to existing content
-        contents[0].parts.push(...imageParts);
-      } else {
-        contents.push({
-          parts: imageParts
-        });
-      }
-    }
+    console.log('Generating content with model:', modelName, 'parts:', parts.length);
+    console.log('Using Gemini 2.5 models to avoid 1.5 Flash quota limits');
 
-    const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
+    // Generate content using the official SDK with proper error handling
+    const result = await model.generateContent(parts);
+    const response = result.response;
+    
+    // Check for safety ratings and blocked content
+    if (response.promptFeedback?.blockReason) {
       throw new GeminiError(
-        'API_ERROR',
-        errorData.error?.message || 'Failed to generate prompt',
-        errorData
+        'CONTENT_BLOCKED',
+        `Content was blocked: ${response.promptFeedback.blockReason}`,
+        response.promptFeedback
       );
     }
 
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new GeminiError('NO_RESPONSE', 'No response generated from Gemini API');
+    // Check if response was generated successfully
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new GeminiError('NO_RESPONSE', 'No response candidates generated');
     }
 
-    const generatedText = data.candidates[0].content.parts[0].text;
+    const candidate = response.candidates[0];
     
-    // For now, return a basic response structure
-    // This will be enhanced when we implement the actual prompt parsing
+    // Check if candidate was blocked
+    if (candidate.finishReason === 'SAFETY') {
+      throw new GeminiError(
+        'SAFETY_BLOCKED',
+        'Response was blocked due to safety concerns',
+        candidate.safetyRatings
+      );
+    }
+
+    if (candidate.finishReason === 'RECITATION') {
+      throw new GeminiError(
+        'RECITATION_BLOCKED',
+        'Response was blocked due to recitation concerns'
+      );
+    }
+
+    const generatedText = response.text();
+    console.log('Generated text:', generatedText.substring(0, 200) + '...');
+    
+    // Return response in expected format
     return {
       generatedPrompt: {
-        id: crypto.randomUUID(),
+        id: generateId(),
         scaffold: [], // Will be populated by prompt parsing logic
         rawText: generatedText,
         formattedOutputs: {},
         metadata: {
           createdAt: new Date(),
-          model: GEMINI_MODEL,
+          model: modelName,
           version: 1,
         },
       },
@@ -245,11 +297,34 @@ export async function generatePromptWithGemini(request: GeminiRequest): Promise<
       clarifyingQuestions: [],
     };
   } catch (error) {
+    console.error('Gemini API error:', error);
+    
+    // Handle Google AI SDK specific errors
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      
+      if (errorMessage.includes('api key not valid') || errorMessage.includes('invalid api key')) {
+        throw new GeminiError('INVALID_API_KEY', 'Invalid API key provided');
+      }
+      if (errorMessage.includes('quota exceeded') || errorMessage.includes('quota')) {
+        throw new GeminiError('QUOTA_EXCEEDED', 'API quota exceeded. The app now uses Gemini 2.5 Pro/Flash which have separate quotas.');
+      }
+      if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+        throw new GeminiError('RATE_LIMIT_EXCEEDED', 'Rate limit exceeded');
+      }
+      if (errorMessage.includes('model not found')) {
+        throw new GeminiError('MODEL_NOT_FOUND', 'The requested model is not available');
+      }
+      if (errorMessage.includes('content filter') || errorMessage.includes('safety')) {
+        throw new GeminiError('CONTENT_FILTERED', 'Content was filtered by safety systems');
+      }
+    }
+    
+    // Re-throw GeminiError instances
     if (error instanceof GeminiError) {
       throw error;
     }
     
-    console.error('Gemini API error:', error);
     throw new GeminiError(
       'NETWORK_ERROR',
       'Failed to connect to Gemini API',
@@ -259,7 +334,8 @@ export async function generatePromptWithGemini(request: GeminiRequest): Promise<
 }
 
 /**
- * Analyzes an image using Gemini Vision
+ * Analyzes an image using Gemini Vision with the official SDK
+ * Enhanced based on official image understanding documentation
  */
 export async function analyzeImageWithGemini(request: ImageAnalysisRequest): Promise<ImageAnalysisResponse> {
   const { image, originalPrompt, apiKey } = request;
@@ -302,51 +378,61 @@ ANALYSIS GUIDELINES:
 Be thorough but concise. Analyze at least 5-10 key elements from the prompt.
 `;
 
-    const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: analysisPrompt },
-              {
-                inline_data: {
-                  mime_type: 'image/jpeg',
-                  data: image
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 32,
-            topP: 0.9,
-            maxOutputTokens: 2048,
-          },
-        }),
-      }
-    );
+    // Initialize the Google AI SDK with Pro model for better image understanding
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_PRO_MODEL, // Use Pro model for better image analysis
+      generationConfig: IMAGE_ANALYSIS_CONFIG
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    // Detect image format from base64 data
+    let mimeType = 'image/jpeg'; // default
+    if (image.startsWith('/9j/')) {
+      mimeType = 'image/jpeg';
+    } else if (image.startsWith('iVBORw0KGgo')) {
+      mimeType = 'image/png';
+    } else if (image.startsWith('R0lGODlh')) {
+      mimeType = 'image/gif';
+    } else if (image.startsWith('UklGR')) {
+      mimeType = 'image/webp';
+    }
+
+    // Generate analysis following image understanding best practices
+    const result = await model.generateContent([
+      { text: analysisPrompt },
+      {
+        inlineData: {
+          mimeType,
+          data: image
+        }
+      }
+    ]);
+
+    const response = result.response;
+    
+    // Check for safety and content blocks
+    if (response.promptFeedback?.blockReason) {
       throw new GeminiError(
-        'API_ERROR',
-        errorData.error?.message || 'Failed to analyze image',
-        errorData
+        'CONTENT_BLOCKED',
+        `Image analysis was blocked: ${response.promptFeedback.blockReason}`,
+        response.promptFeedback
       );
     }
 
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new GeminiError('NO_RESPONSE', 'No analysis generated from Gemini API');
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new GeminiError('NO_RESPONSE', 'No analysis generated');
     }
 
-    const analysisText = data.candidates[0].content.parts[0].text;
+    const candidate = response.candidates[0];
+    if (candidate.finishReason === 'SAFETY') {
+      throw new GeminiError(
+        'SAFETY_BLOCKED',
+        'Image analysis was blocked due to safety concerns',
+        candidate.safetyRatings
+      );
+    }
+
+    const analysisText = response.text();
     
     try {
       // Try to parse JSON response
@@ -356,7 +442,8 @@ Be thorough but concise. Analyze at least 5-10 key elements from the prompt.
         tokenComparison: analysisData.tokenComparison || [],
         suggestions: analysisData.suggestions || [],
       };
-    } catch {
+    } catch (parseError) {
+      console.warn('Failed to parse JSON response, returning raw text:', parseError);
       // If JSON parsing fails, return the raw text as description
       return {
         description: analysisText,
@@ -365,11 +452,31 @@ Be thorough but concise. Analyze at least 5-10 key elements from the prompt.
       };
     }
   } catch (error) {
+    console.error('Gemini image analysis error:', error);
+    
+    // Handle Google AI SDK specific errors
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      
+      if (errorMessage.includes('api key not valid') || errorMessage.includes('invalid api key')) {
+        throw new GeminiError('INVALID_API_KEY', 'Invalid API key provided');
+      }
+      if (errorMessage.includes('quota exceeded')) {
+        throw new GeminiError('QUOTA_EXCEEDED', 'API quota exceeded');
+      }
+      if (errorMessage.includes('rate limit')) {
+        throw new GeminiError('RATE_LIMIT_EXCEEDED', 'Rate limit exceeded');
+      }
+      if (errorMessage.includes('image') && errorMessage.includes('format')) {
+        throw new GeminiError('INVALID_IMAGE', 'Invalid image format or corrupted image');
+      }
+    }
+    
+    // Re-throw GeminiError instances
     if (error instanceof GeminiError) {
       throw error;
     }
     
-    console.error('Gemini image analysis error:', error);
     throw new GeminiError(
       'NETWORK_ERROR',
       'Failed to analyze image with Gemini API',
@@ -381,9 +488,7 @@ Be thorough but concise. Analyze at least 5-10 key elements from the prompt.
 /**
  * Creates a prompt generation request for the Gemini API
  */
-export function createPromptGenerationRequest(
-  userInput: string
-): string {
+export function createPromptGenerationRequest(userInput: string): string {
   const systemPrompt = `
 You are an expert AI image prompt engineer specializing in creating detailed, effective prompts for AI image generation models like Stable Diffusion, Midjourney, DALL-E, Imagen, and Flux.
 
@@ -419,13 +524,19 @@ Enhanced Prompt:`;
 }
 
 /**
- * Creates a clarifying questions request for the Gemini API
+ * Generates clarifying questions based on user input using the official SDK
  */
-export function createClarifyingQuestionsRequest(
+export async function generateClarifyingQuestions(
   userInput: string,
+  apiKey: string,
   currentScaffold?: string
-): string {
-  const questionsPrompt = `
+): Promise<unknown[]> {
+  if (!apiKey) {
+    throw new GeminiError('MISSING_API_KEY', 'API key is required');
+  }
+
+  try {
+    const questionsPrompt = `
 You are an AI prompt engineering assistant. Analyze the user's input and current prompt state to generate 3-5 clarifying questions that would help improve the image generation prompt.
 
 **USER INPUT:** "${userInput}"
@@ -458,61 +569,16 @@ Categories should be one of: "style", "lighting", "composition", "technical"
 Types should be one of: "text", "select", "multiselect"
 `;
 
-  return questionsPrompt;
-}
+    // Initialize the Google AI SDK with appropriate configuration
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_MODEL,
+      generationConfig: CREATIVE_CONFIG // Use creative config for generating questions
+    });
 
-/**
- * Generates clarifying questions based on user input
- */
-export async function generateClarifyingQuestions(
-  userInput: string,
-  apiKey: string,
-  currentScaffold?: string
-): Promise<unknown[]> {
-  if (!apiKey) {
-    throw new GeminiError('MISSING_API_KEY', 'API key is required');
-  }
-
-  try {
-    const questionsPrompt = createClarifyingQuestionsRequest(userInput, currentScaffold);
-
-    const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: questionsPrompt }]
-          }],
-          generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 0.8,
-            maxOutputTokens: 1024,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new GeminiError(
-        'API_ERROR',
-        errorData.error?.message || 'Failed to generate clarifying questions',
-        errorData
-      );
-    }
-
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      return [];
-    }
-
-    const questionsText = data.candidates[0].content.parts[0].text;
+    const result = await model.generateContent(questionsPrompt);
+    const response = await result.response;
+    const questionsText = response.text();
     
     try {
       // Try to parse JSON response
@@ -523,17 +589,13 @@ export async function generateClarifyingQuestions(
       return [];
     }
   } catch (error) {
-    if (error instanceof GeminiError) {
-      throw error;
-    }
-    
     console.error('Clarifying questions generation error:', error);
     return [];
   }
 }
 
 /**
- * Generates prompt suggestions based on user input
+ * Generates prompt suggestions based on user input using the official SDK
  */
 export async function generatePromptSuggestions(
   userInput: string,
@@ -561,43 +623,16 @@ Format your response as a simple JSON array of strings:
 Each suggestion should be concise, specific, and actionable.
 `;
 
-    const response = await fetch(
-      `${GEMINI_API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: suggestionsPrompt }]
-          }],
-          generationConfig: {
-            temperature: 0.5,
-            topK: 40,
-            topP: 0.9,
-            maxOutputTokens: 512,
-          },
-        }),
-      }
-    );
+    // Initialize the Google AI SDK with appropriate configuration
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_MODEL,
+      generationConfig: TEXT_GENERATION_CONFIG // Use standard config for suggestions
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new GeminiError(
-        'API_ERROR',
-        errorData.error?.message || 'Failed to generate suggestions',
-        errorData
-      );
-    }
-
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      return [];
-    }
-
-    const suggestionsText = data.candidates[0].content.parts[0].text;
+    const result = await model.generateContent(suggestionsPrompt);
+    const response = await result.response;
+    const suggestionsText = response.text();
     
     try {
       // Try to parse JSON response
@@ -608,12 +643,157 @@ Each suggestion should be concise, specific, and actionable.
       return [];
     }
   } catch (error) {
+    console.error('Suggestions generation error:', error);
+    return [];
+  }
+}
+
+/**
+ * Generates content with long context support
+ * Based on official long context documentation
+ */
+export async function generateWithLongContext(
+  prompt: string,
+  context: string,
+  apiKey: string,
+  images?: string[]
+): Promise<string> {
+  if (!apiKey) {
+    throw new GeminiError('MISSING_API_KEY', 'API key is required');
+  }
+
+  try {
+    // Use Pro model for long context scenarios
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_PRO_MODEL,
+      generationConfig: {
+        temperature: 0.4,
+        topK: 32,
+        topP: 0.8,
+        maxOutputTokens: 8192, // Higher limit for long context
+      }
+    });
+
+    // Prepare content with context first, then prompt
+    const parts: any[] = [];
+    
+    // Add context first (recommended for long context)
+    if (context) {
+      parts.push({ text: `Context: ${context}` });
+    }
+    
+    // Add main prompt
+    parts.push({ text: `Request: ${prompt}` });
+    
+    // Add images if provided
+    if (images && images.length > 0) {
+      images.forEach(base64Image => {
+        let mimeType = 'image/jpeg';
+        if (base64Image.startsWith('iVBORw0KGgo')) {
+          mimeType = 'image/png';
+        } else if (base64Image.startsWith('R0lGODlh')) {
+          mimeType = 'image/gif';
+        } else if (base64Image.startsWith('UklGR')) {
+          mimeType = 'image/webp';
+        }
+
+        parts.push({
+          inlineData: {
+            mimeType,
+            data: base64Image
+          }
+        });
+      });
+    }
+
+    const result = await model.generateContent(parts);
+    const response = result.response;
+    
+    // Handle potential blocks and safety issues
+    if (response.promptFeedback?.blockReason) {
+      throw new GeminiError(
+        'CONTENT_BLOCKED',
+        `Content was blocked: ${response.promptFeedback.blockReason}`
+      );
+    }
+
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new GeminiError('NO_RESPONSE', 'No response generated');
+    }
+
+    const candidate = response.candidates[0];
+    if (candidate.finishReason === 'SAFETY') {
+      throw new GeminiError('SAFETY_BLOCKED', 'Response blocked due to safety concerns');
+    }
+
+    return response.text();
+  } catch (error) {
+    console.error('Long context generation error:', error);
+    
     if (error instanceof GeminiError) {
       throw error;
     }
     
-    console.error('Suggestions generation error:', error);
-    return [];
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('context length') || errorMessage.includes('too long')) {
+        throw new GeminiError('CONTEXT_TOO_LONG', 'Input context is too long for the model');
+      }
+    }
+    
+    throw new GeminiError('NETWORK_ERROR', 'Failed to generate content with long context', error);
+  }
+}
+
+/**
+ * Generates content with streaming support
+ * Based on official text generation documentation
+ */
+export async function generateContentStream(
+  prompt: string,
+  apiKey: string,
+  onChunk?: (chunk: string) => void
+): Promise<string> {
+  if (!apiKey) {
+    throw new GeminiError('MISSING_API_KEY', 'API key is required');
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: GEMINI_MODEL,
+      generationConfig: TEXT_GENERATION_CONFIG
+    });
+
+    const result = await model.generateContentStream(prompt);
+    let fullText = '';
+
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      fullText += chunkText;
+      
+      // Call the callback if provided
+      if (onChunk) {
+        onChunk(chunkText);
+      }
+    }
+
+    return fullText;
+  } catch (error) {
+    console.error('Streaming generation error:', error);
+    
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('api key not valid')) {
+        throw new GeminiError('INVALID_API_KEY', 'Invalid API key provided');
+      }
+      if (errorMessage.includes('quota exceeded')) {
+        throw new GeminiError('QUOTA_EXCEEDED', 'API quota exceeded');
+      }
+    }
+    
+    throw new GeminiError('NETWORK_ERROR', 'Failed to generate streaming content', error);
   }
 }
 

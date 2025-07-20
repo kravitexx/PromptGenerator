@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",
+    "@google/generative-ai": "^0.21.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",

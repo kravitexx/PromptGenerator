@@ -328,7 +328,7 @@ export function logError(error: AppError, context?: Record<string, unknown>) {
     message: error.message,
     code: error.code,
     retryable: error.retryable,
-    context,
+    ...(context && { context }), // Only include context if it exists
     stack: error.originalError?.stack,
   };
 

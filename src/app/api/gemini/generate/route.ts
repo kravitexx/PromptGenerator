@@ -49,15 +49,22 @@ export async function POST(request: NextRequest) {
     const enhancedPrompt = createPromptGenerationRequest(prompt);
 
     // Generate enhanced prompt using Gemini with retry mechanism
-    const geminiResponse = await retryApiCall(
-      () => generatePromptWithGemini({
-        prompt: enhancedPrompt,
-        images: images || [],
-        apiKey,
-      }),
-      3,
-      1000
-    );
+    let geminiResponse;
+    try {
+      geminiResponse = await retryApiCall(
+        () => generatePromptWithGemini({
+          prompt: enhancedPrompt,
+          images: images || [],
+          apiKey,
+        }),
+        3,
+        1000
+      );
+    } catch (error) {
+      console.error('Gemini API call failed:', error);
+      // Continue with basic scaffold if Gemini fails
+      geminiResponse = { generatedPrompt: null };
+    }
 
     // Analyze the user's original input and populate scaffold
     const populatedScaffold = analyzeInputAndPopulateScaffold(prompt);
@@ -68,7 +75,7 @@ export async function POST(request: NextRequest) {
     let clarifyingQuestions: unknown[] = [];
 
     // If Gemini provided a better prompt, use it to further enhance the scaffold
-    if (geminiResponse.generatedPrompt.rawText) {
+    if (geminiResponse.generatedPrompt && geminiResponse.generatedPrompt.rawText) {
       enhancedText = geminiResponse.generatedPrompt.rawText;
       const enhancedScaffold = analyzeInputAndPopulateScaffold(
         enhancedText,

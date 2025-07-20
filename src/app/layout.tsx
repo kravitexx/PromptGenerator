@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DataCleaner } from '@/components/DataCleaner';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -111,6 +112,7 @@ export default function RootLayout({
           suppressHydrationWarning
         >
           <ErrorBoundary>
+            <DataCleaner />
             {/* Skip to main content for accessibility */}
             <a
               href="#main-content"

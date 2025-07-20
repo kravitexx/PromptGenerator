@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { ChatMessage } from "@/types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -75,14 +76,45 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
 /**
  * Formats a date for display
  */
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+export function formatDate(date: Date | string | number | null | undefined): string {
+  try {
+    // Handle null/undefined
+    if (!date) {
+      return 'Unknown date';
+    }
+    
+    // Handle already formatted strings
+    if (typeof date === 'string' && date.includes('Invalid')) {
+      return 'Unknown date';
+    }
+    
+    const dateObj = date instanceof Date ? date : new Date(date);
+    
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.warn('Invalid date value:', date);
+      return 'Unknown date';
+    }
+    
+    // Additional check for reasonable date range (not too far in past/future)
+    const now = new Date();
+    const yearDiff = Math.abs(dateObj.getFullYear() - now.getFullYear());
+    if (yearDiff > 100) {
+      console.warn('Date seems unreasonable:', dateObj);
+      return 'Unknown date';
+    }
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(dateObj);
+  } catch (error) {
+    console.warn('Error formatting date:', error, 'Input:', date);
+    return 'Unknown date';
+  }
 }
 
 /**
@@ -178,6 +210,68 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
     return JSON.parse(json);
   } catch {
     return fallback;
+  }
+}
+
+/**
+ * Deserializes chat messages and fixes date objects
+ */
+export function deserializeChatMessages(messages: unknown[]): ChatMessage[] {
+  if (!Array.isArray(messages)) return [];
+  
+  return messages.map(msg => {
+    if (!msg || typeof msg !== 'object') return msg;
+    
+    const message = msg as any;
+    
+    // Fix timestamp - be very defensive about date parsing
+    if (message.timestamp) {
+      try {
+        const date = new Date(message.timestamp);
+        if (isNaN(date.getTime())) {
+          // If invalid, use current time
+          message.timestamp = new Date();
+        } else {
+          message.timestamp = date;
+        }
+      } catch (error) {
+        console.warn('Failed to parse message timestamp:', message.timestamp);
+        message.timestamp = new Date();
+      }
+    } else {
+      message.timestamp = new Date();
+    }
+    
+    // Fix promptData metadata createdAt if it exists
+    if (message.promptData?.metadata?.createdAt) {
+      try {
+        const date = new Date(message.promptData.metadata.createdAt);
+        if (isNaN(date.getTime())) {
+          // If invalid, use current time
+          message.promptData.metadata.createdAt = new Date();
+        } else {
+          message.promptData.metadata.createdAt = date;
+        }
+      } catch (error) {
+        console.warn('Failed to parse promptData createdAt:', message.promptData.metadata.createdAt);
+        message.promptData.metadata.createdAt = new Date();
+      }
+    }
+    
+    return message;
+  });
+}
+
+/**
+ * Clears corrupted localStorage data
+ */
+export function clearCorruptedData(): void {
+  try {
+    // Clear chat messages
+    localStorage.removeItem('chat_messages');
+    console.log('Cleared potentially corrupted chat messages from localStorage');
+  } catch (error) {
+    console.warn('Failed to clear localStorage:', error);
   }
 }
 
