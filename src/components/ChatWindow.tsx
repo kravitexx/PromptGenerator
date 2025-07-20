@@ -12,6 +12,14 @@ import { useApiKey } from '@/hooks/useApiKey';
 import { useChatPersistence } from '@/hooks/useDrivePersistence';
 import { ModernMessageBubble } from '@/components/ModernMessageBubble';
 import { ModernTypingIndicator } from '@/components/ModernTypingIndicator';
+import { 
+  SkeletonMessage, 
+  ErrorState, 
+  ConnectionStatus, 
+  MessageLoadingPlaceholder,
+  ChatLoadingScreen,
+  SmoothLoadingTransition
+} from '@/components/ModernLoadingStates';
 
 import { PromptGenerator } from '@/components/PromptGenerator';
 import { DriveStatus } from '@/components/DriveStatus';
@@ -30,6 +38,8 @@ export function ChatWindow({ onPromptGenerated, className, showPromptGenerator =
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(true);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [showImageDropZone, setShowImageDropZone] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
