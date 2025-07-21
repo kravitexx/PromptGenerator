@@ -5,15 +5,15 @@ import { motion } from 'framer-motion';
 
 interface ResponsiveGridProps {
   children: React.ReactNode;
-  className?: string;
   columns?: {
     sm?: number;
     md?: number;
     lg?: number;
     xl?: number;
   };
-  gap?: string;
-  animated?: boolean;
+  gap?: number;
+  className?: string;
+  animate?: boolean;
 }
 
 const containerVariants = {
@@ -38,31 +38,30 @@ const itemVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 15
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94]
     }
   }
 };
 
 export function ResponsiveGrid({ 
   children, 
-  className = '', 
   columns = { sm: 1, md: 2, lg: 3, xl: 4 },
-  gap = 'gap-6',
-  animated = true
+  gap = 6,
+  className = '',
+  animate = true
 }: ResponsiveGridProps) {
   const gridClasses = [
-    'grid',
-    `grid-cols-${columns.sm || 1}`,
+    `grid`,
+    `gap-${gap}`,
+    columns.sm && `grid-cols-${columns.sm}`,
     columns.md && `md:grid-cols-${columns.md}`,
     columns.lg && `lg:grid-cols-${columns.lg}`,
     columns.xl && `xl:grid-cols-${columns.xl}`,
-    gap,
     className
   ].filter(Boolean).join(' ');
 
-  if (animated) {
+  if (animate) {
     return (
       <motion.div
         className={gridClasses}
@@ -93,16 +92,16 @@ export function ResponsiveGrid({
 // Responsive container component
 interface ResponsiveContainerProps {
   children: React.ReactNode;
-  className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   padding?: boolean;
+  className?: string;
 }
 
 export function ResponsiveContainer({ 
   children, 
-  className = '', 
   maxWidth = 'xl',
-  padding = true
+  padding = true,
+  className = ''
 }: ResponsiveContainerProps) {
   const containerClasses = [
     'w-full',
@@ -119,80 +118,104 @@ export function ResponsiveContainer({
   );
 }
 
-// Responsive flex component
-interface ResponsiveFlexProps {
+// Responsive section component
+interface ResponsiveSectionProps {
   children: React.ReactNode;
   className?: string;
-  direction?: 'row' | 'col';
-  responsive?: boolean;
-  align?: 'start' | 'center' | 'end' | 'stretch';
-  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
-  gap?: string;
-  wrap?: boolean;
+  background?: 'default' | 'muted' | 'gradient';
+  padding?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function ResponsiveFlex({ 
+export function ResponsiveSection({ 
   children, 
-  className = '', 
-  direction = 'row',
-  responsive = true,
-  align = 'start',
-  justify = 'start',
-  gap = 'gap-4',
-  wrap = false
-}: ResponsiveFlexProps) {
-  const flexClasses = [
-    'flex',
-    responsive && direction === 'row' ? 'flex-col sm:flex-row' : `flex-${direction}`,
-    !responsive && `flex-${direction}`,
-    `items-${align}`,
-    `justify-${justify}`,
-    gap,
-    wrap && 'flex-wrap',
+  className = '',
+  background = 'default',
+  padding = 'lg'
+}: ResponsiveSectionProps) {
+  const backgroundClasses = {
+    default: '',
+    muted: 'bg-gray-50/50',
+    gradient: 'bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30'
+  };
+
+  const paddingClasses = {
+    sm: 'py-8',
+    md: 'py-12',
+    lg: 'py-16',
+    xl: 'py-24'
+  };
+
+  const sectionClasses = [
+    'w-full',
+    backgroundClasses[background],
+    paddingClasses[padding],
     className
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={flexClasses}>
+    <section className={sectionClasses}>
+      <ResponsiveContainer>
+        {children}
+      </ResponsiveContainer>
+    </section>
+  );
+}
+
+// Responsive card grid specifically for cards
+interface ResponsiveCardGridProps {
+  children: React.ReactNode;
+  minCardWidth?: string;
+  gap?: number;
+  className?: string;
+  animate?: boolean;
+}
+
+export function ResponsiveCardGrid({ 
+  children, 
+  minCardWidth = '300px',
+  gap = 6,
+  className = '',
+  animate = true
+}: ResponsiveCardGridProps) {
+  const gridClasses = [
+    'grid',
+    `gap-${gap}`,
+    'grid-cols-1',
+    'sm:grid-cols-2',
+    'lg:grid-cols-3',
+    'xl:grid-cols-4',
+    className
+  ].filter(Boolean).join(' ');
+
+  const gridStyle = {
+    gridTemplateColumns: `repeat(auto-fit, minmax(${minCardWidth}, 1fr))`
+  };
+
+  if (animate) {
+    return (
+      <motion.div
+        className={gridClasses}
+        style={gridStyle}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {React.Children.map(children, (child, index) => (
+          <motion.div
+            key={index}
+            variants={itemVariants}
+            className="w-full"
+          >
+            {child}
+          </motion.div>
+        ))}
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className={gridClasses} style={gridStyle}>
       {children}
     </div>
-  );
-}
-
-// Responsive card grid specifically for prompt cards
-interface PromptCardGridProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function PromptCardGrid({ children, className = '' }: PromptCardGridProps) {
-  return (
-    <ResponsiveGrid
-      columns={{ sm: 1, md: 1, lg: 2, xl: 2 }}
-      gap="gap-6"
-      className={className}
-      animated={true}
-    >
-      {children}
-    </ResponsiveGrid>
-  );
-}
-
-// Responsive stats grid
-interface StatsGridProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function StatsGrid({ children, className = '' }: StatsGridProps) {
-  return (
-    <ResponsiveGrid
-      columns={{ sm: 1, md: 2, lg: 4, xl: 4 }}
-      gap="gap-4"
-      className={className}
-      animated={true}
-    >
-      {children}
-    </ResponsiveGrid>
   );
 }

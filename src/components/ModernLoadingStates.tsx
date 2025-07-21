@@ -494,4 +494,22 @@ export function SuccessState({
       )}
     </motion.div>
   );
-}
+}//
+ Export advanced loading components for integration
+export { 
+  AdvancedLoading, 
+  ShimmerLoader, 
+  ProgressiveLoader, 
+  LoadingOverlay,
+  SkeletonCard,
+  SkeletonPromptCard,
+  ErrorToSuccessTransition,
+  type LoadingState 
+} from './AdvancedLoadingStates';
+
+// Export loading hooks
+export { 
+  useLoadingState, 
+  useProgressiveLoading, 
+  useMultiLoadingState 
+} from '../hooks/useLoadingState';
