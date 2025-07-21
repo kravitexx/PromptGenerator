@@ -3,9 +3,9 @@
 import { motion } from 'framer-motion';
 import { ChatWindow } from '@/components/ChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
-import { ModernHeader } from '@/components/ModernHeader'
 import { ModernSidebar } from '@/components/ModernSidebar'
 import { StaggerContainer, StaggerItem, ScrollTriggeredStagger } from '@/components/PageTransition'
+import { ResponsiveContainer } from '@/components/ResponsiveContainer'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
 
@@ -22,16 +22,13 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Modern Header */}
-      <ModernHeader />
-      
+    <div className="bg-gradient-to-br from-background via-background to-muted/20">
       {/* Main Container with Enhanced Animations */}
       <StaggerContainer 
         delay={0.1}
         staggerDelay={0.12}
         direction="normal"
-        className="relative"
+        className="relative min-h-screen"
       >
         {/* Animated Background Pattern */}
         <motion.div 
@@ -41,13 +38,13 @@ export default function ChatPage() {
           className="absolute inset-0 bg-grid-pattern pointer-events-none" 
         />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ResponsiveContainer variant="wide" padding="md" className="py-4 sm:py-6 lg:py-8">
           <ApiKeyGuard>
             {/* Enhanced Grid Layout with Stagger */}
             <ScrollTriggeredStagger 
               threshold={0.2}
               rootMargin="-20px"
-              className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-180px)]"
+              className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6 h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)]"
             >
               {/* Main Chat Interface with Enhanced Animation */}
               <StaggerItem 

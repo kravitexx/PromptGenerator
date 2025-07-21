@@ -4,6 +4,7 @@ import { SignInButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { StaggerContainer, StaggerItem, MagneticHover } from '@/components/PageTransition'
+import { ResponsiveContainer, ResponsiveGrid } from '@/components/ResponsiveGrid'
 import { Sparkles, Zap, Palette } from 'lucide-react'
 
 export default async function Home() {
@@ -17,14 +18,15 @@ export default async function Home() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-accent/10 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-1/4 left-1/4 w-32 sm:w-64 h-32 sm:h-64 bg-primary/10 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 right-1/4 w-24 sm:w-48 h-24 sm:h-48 bg-accent/10 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }} />
       
-      <StaggerContainer 
-        className="max-w-lg w-full space-y-8 p-8 relative z-10"
-        delay={0.2}
-        staggerDelay={0.15}
-      >
+      <ResponsiveContainer maxWidth="lg" padding={true}>
+        <StaggerContainer 
+          className="space-y-6 sm:space-y-8 relative z-10"
+          delay={0.2}
+          staggerDelay={0.15}
+        >
         <div className="text-center space-y-6">
           {/* Logo and Icon with Magnetic Effect */}
           <StaggerItem direction="scale" intensity="normal">
@@ -80,11 +82,13 @@ export default async function Home() {
             </p>
           </StaggerItem>
 
-          {/* Features with Stagger and Hover Effects */}
+          {/* Features with Responsive Grid */}
           <StaggerItem direction="up" intensity="normal">
-            <StaggerContainer 
-              staggerDelay={0.1}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
+            <ResponsiveGrid
+              columns={{ sm: 1, md: 3, lg: 3 }}
+              gap="gap-4"
+              animate={true}
+              className="mb-6 sm:mb-8"
             >
               <StaggerItem>
                 <MagneticHover strength={0.15}>
@@ -148,7 +152,7 @@ export default async function Home() {
                   </motion.div>
                 </MagneticHover>
               </StaggerItem>
-            </StaggerContainer>
+            </ResponsiveGrid>
           </StaggerItem>
 
           {/* Description */}
@@ -188,7 +192,8 @@ export default async function Home() {
             </SignInButton>
           </StaggerItem>
         </div>
-      </StaggerContainer>
+        </StaggerContainer>
+      </ResponsiveContainer>
     </div>
   )
 }

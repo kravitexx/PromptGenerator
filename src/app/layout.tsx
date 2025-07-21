@@ -6,6 +6,8 @@ import { DataCleaner } from '@/components/DataCleaner';
 import { PageTransition } from '@/components/PageTransition';
 import { RouteTransition } from '@/components/RouteTransition';
 import { FloatingApiKeyTrigger } from '@/components/FloatingApiKeyTrigger';
+import { ResponsiveHeader } from '@/components/ResponsiveHeader';
+import { ResponsiveFooter } from '@/components/ResponsiveFooter';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -124,12 +126,21 @@ export default function RootLayout({
               Skip to main content
             </a>
             
-            <div id="main-content">
-              <RouteTransition>
-                <PageTransition>
-                  {children}
-                </PageTransition>
-              </RouteTransition>
+            <div id="main-content" className="flex flex-col min-h-screen">
+              {/* Responsive Header */}
+              <ResponsiveHeader />
+              
+              {/* Main Content */}
+              <main className="flex-1">
+                <RouteTransition>
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                </RouteTransition>
+              </main>
+              
+              {/* Responsive Footer */}
+              <ResponsiveFooter />
               
               {/* Floating API Key Manager */}
               <FloatingApiKeyTrigger position="top-right" />
