@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { InteractiveButton, InteractiveInput, InteractiveTextarea } from '@/components/MicroInteractions';
+import { StateTransition } from '@/components/StateTransitions';
 import { GeneratedPrompt, ScaffoldSlot } from '@/types';
 import { ModernPromptCard } from '@/components/ModernPromptCard';
 import { ModernScaffoldDisplay } from '@/components/ModernScaffoldDisplay';
