@@ -130,6 +130,20 @@ module.exports = {
         'modern': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         'modern-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       },
+      // Enhanced responsive breakpoints
+      screens: {
+        'xs': '475px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+        '3xl': '1920px',
+        // Height-based breakpoints
+        'h-sm': { 'raw': '(min-height: 640px)' },
+        'h-md': { 'raw': '(min-height: 768px)' },
+        'h-lg': { 'raw': '(min-height: 1024px)' },
+      },
     },
   },
   plugins: [
@@ -191,6 +205,30 @@ module.exports = {
         '.bg-grid-pattern': {
           'background-image': 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
           'background-size': '20px 20px',
+        },
+        // Responsive utilities
+        '.mobile-padding': {
+          padding: '1rem',
+          '@media (min-width: 640px)': {
+            padding: '1.5rem',
+          },
+          '@media (min-width: 1024px)': {
+            padding: '2rem',
+          },
+        },
+        '.mobile-text': {
+          'font-size': '0.875rem',
+          '@media (min-width: 640px)': {
+            'font-size': '1rem',
+          },
+        },
+        '.mobile-card': {
+          'border-radius': '8px',
+          margin: '0.5rem',
+          '@media (min-width: 640px)': {
+            'border-radius': '12px',
+            margin: '1rem',
+          },
         },
       }
       addUtilities(newUtilities)

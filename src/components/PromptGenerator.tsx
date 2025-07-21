@@ -14,6 +14,7 @@ import { PromptImprover } from '@/components/PromptImprover';
 import { ImageFeedbackAnalyzer } from '@/components/ImageFeedbackAnalyzer';
 import { updateGeneratedPrompt } from '@/lib/promptBuilder';
 import { formatDate } from '@/lib/utils';
+import { ResponsiveContainer, ResponsiveFlex, PromptCardGrid } from '@/components/ResponsiveGrid';
 import { 
   Wand2, 
   RefreshCw, 
@@ -141,16 +142,27 @@ export function PromptGenerator({
   const stats = getCompletionStats();
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <ResponsiveContainer maxWidth="full" className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Header with Stats and Actions */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+          <ResponsiveFlex 
+            justify="between" 
+            align="center" 
+            responsive={true}
+            gap="gap-4"
+            className="flex-col sm:flex-row"
+          >
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Wand2 className="h-5 w-5" />
               Prompt Generator
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <ResponsiveFlex 
+              align="center" 
+              gap="gap-2" 
+              responsive={false}
+              className="flex-wrap justify-center sm:justify-end"
+            >
               <Badge variant={stats.percentage === 100 ? 'default' : 'secondary'}>
                 <Sparkles className="h-3 w-3 mr-1" />
                 {stats.percentage}% Complete
@@ -160,12 +172,14 @@ export function PromptGenerator({
                 size="sm"
                 onClick={handleRegeneratePrompt}
                 disabled={isRegenerating}
+                className="text-xs sm:text-sm"
               >
                 <RefreshCw className={`h-4 w-4 mr-1 ${isRegenerating ? 'animate-spin' : ''}`} />
-                {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                <span className="hidden sm:inline">{isRegenerating ? 'Regenerating...' : 'Regenerate'}</span>
+                <span className="sm:hidden">Regen</span>
               </Button>
-            </div>
-          </div>
+            </ResponsiveFlex>
+          </ResponsiveFlex>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
@@ -259,6 +273,6 @@ export function PromptGenerator({
           </div>
         </CardContent>
       </Card>
-    </div>
+    </ResponsiveContainer>
   );
 }

@@ -5,7 +5,7 @@ import { ChatWindow } from '@/components/ChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
 import { ModernSidebar } from '@/components/ModernSidebar'
 import { StaggerContainer, StaggerItem, ScrollTriggeredStagger } from '@/components/PageTransition'
-import { ResponsiveContainer } from '@/components/ResponsiveContainer'
+import { ResponsiveContainer } from '@/components/ResponsiveGrid'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
 
@@ -38,7 +38,7 @@ export default function ChatPage() {
           className="absolute inset-0 bg-grid-pattern pointer-events-none" 
         />
         
-        <ResponsiveContainer variant="wide" padding="md" className="py-4 sm:py-6 lg:py-8">
+        <ResponsiveContainer maxWidth="full" padding={true} className="py-4 sm:py-6 lg:py-8">
           <ApiKeyGuard>
             {/* Enhanced Grid Layout with Stagger */}
             <ScrollTriggeredStagger 
@@ -91,7 +91,7 @@ export default function ChatPage() {
               </div>
             </ScrollTriggeredStagger>
           </ApiKeyGuard>
-        </div>
+        </ResponsiveContainer>
       </StaggerContainer>
 
       {/* Mobile Sidebar */}

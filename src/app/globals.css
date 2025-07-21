@@ -503,3 +503,112 @@
     transform: translateX(100%);
   }
 }
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  /* Improve touch targets */
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better mobile typography */
+  body {
+    font-size: 16px; /* Prevent zoom on iOS */
+    line-height: 1.5;
+  }
+  
+  /* Mobile-friendly inputs */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 12px;
+  }
+  
+  /* Mobile card spacing */
+  .mobile-card {
+    margin: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+  }
+  
+  /* Mobile-specific animations */
+  .mobile-fade-in {
+    animation: mobile-fade-in 0.3s ease-out;
+  }
+  
+  @keyframes mobile-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+  .desktop-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Increase button sizes for touch */
+  button {
+    padding: 12px 16px;
+  }
+  
+  /* Better touch feedback */
+  button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 896px) and (orientation: landscape) {
+  .landscape-mobile {
+    height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Reduce header height in landscape */
+  header {
+    height: 48px;
+  }
+}
