@@ -26,46 +26,51 @@ export function ApiKeyGuard({ children, fallback, showTitle = true }: ApiKeyGuar
     );
   }
 
-  if (!hasValidKey) {
-    if (fallback) {
-      return <>{fallback}</>;
-    }
-
-    return (
-      <div className="max-w-2xl mx-auto p-6">
-        {showTitle && (
-          <Card className="mb-6">
-            <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2">
-                <Shield className="h-6 w-6" />
-                API Key Required
-              </CardTitle>
-              <CardDescription>
-                You need a valid Gemini API key to access the AI-powered prompt generation features.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
-
-        <ApiKeyInput
-          onApiKeyValidated={() => {
-            // The useApiKey hook will automatically update when sessionStorage changes
-            window.location.reload();
-          }}
-        />
-
-        {error && (
-          <Card className="mt-4 border-red-200 bg-red-50">
-            <CardContent className="pt-4">
-              <p className="text-red-600 text-sm">{error}</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
+  // If we have a valid key, show the children regardless of error state
+  if (hasValidKey) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  if (fallback) {
+    return <>{fallback}</>;
+  }
+
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="w-full max-w-md space-y-6">
+        {showTitle && (
+          <div className="text-center space-y-4">
+            <div className="p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Shield className="h-6 w-6 text-gray-600" />
+                <h1 className="text-xl font-semibold text-gray-900">API Key Required</h1>
+              </div>
+              <p className="text-gray-600 text-sm">
+                You need a valid Gemini API key to access the AI-powered prompt generation features.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="border border-gray-200 rounded-lg bg-white">
+          <ApiKeyInput
+            onApiKeyValidated={() => {
+              window.location.reload();
+            }}
+          />
+        </div>
+
+        {error && (
+          <div className="border border-red-200 rounded-lg bg-red-50 p-4">
+            <p className="text-red-600 text-sm flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              {error}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /**

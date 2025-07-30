@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGestures } from '@/hooks/useGestures';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
+import {
   Vibrate,
   Volume2,
   VolumeX,
@@ -80,7 +80,7 @@ function useTouchFeedback() {
 
     oscillator.frequency.setValueAtTime(frequencies[type], audioContext.currentTime);
     oscillator.type = 'sine';
-    
+
     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
 
@@ -118,13 +118,13 @@ export function TouchOptimizedInterface({ children, className = '' }: TouchOptim
   };
 
   // Enhanced touch button component
-  const TouchButton = ({ 
-    children, 
-    onClick, 
+  const TouchButton = ({
+    children,
+    onClick,
     variant = 'default',
     disabled = false,
     hapticType = 'light',
-    ...props 
+    ...props
   }: any) => {
     const gestures = useGestures({
       onTap: () => {
@@ -173,7 +173,7 @@ export function TouchOptimizedInterface({ children, className = '' }: TouchOptim
         whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
-        <Card 
+        <Card
           className={`touch-manipulation select-none cursor-pointer ${spacing[deviceType]}`}
           {...props}
         >
@@ -244,7 +244,7 @@ export function TouchOptimizedInterface({ children, className = '' }: TouchOptim
               className="absolute top-12 right-0 bg-white rounded-lg shadow-xl p-4 min-w-48"
             >
               <h3 className="font-semibold mb-3 text-sm">Touch Settings</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Haptic Feedback</span>
@@ -256,7 +256,7 @@ export function TouchOptimizedInterface({ children, className = '' }: TouchOptim
                     <Vibrate className="h-3 w-3" />
                   </TouchButton>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Touch Sounds</span>
                   <TouchButton
@@ -271,7 +271,7 @@ export function TouchOptimizedInterface({ children, className = '' }: TouchOptim
                     )}
                   </TouchButton>
                 </div>
-                
+
                 <div className="pt-2 border-t">
                   <div className="text-xs text-gray-500">
                     Device: {deviceType}

@@ -9,7 +9,6 @@ import { ChatMessage } from '@/types';
 import { formatDate, copyToClipboard } from '@/lib/utils';
 import { getFormattedPrompt } from '@/lib/promptBuilder';
 import { getAllTemplates } from '@/lib/modelTemplates';
-import { AnimatedChatMessage } from '@/components/ComponentTransitions';
 import { 
   Copy, 
   Check, 
@@ -690,8 +689,14 @@ export function ModernMessageBubble({ message, className, isLatest = false }: Mo
   };
 
   return (
-    <AnimatedChatMessage className={className}>
+    <motion.div 
+      className={className}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    >
       {message.type === 'user' ? renderUserMessage() : renderAssistantMessage()}
-    </AnimatedChatMessage>
+    </motion.div>
   );
 }

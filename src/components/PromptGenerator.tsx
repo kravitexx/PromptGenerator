@@ -22,6 +22,7 @@ import {
   Share2,
   Sparkles
 } from 'lucide-react';
+import { ScaffoldDisplay } from './ScaffoldDisplay';
 
 interface PromptGeneratorProps {
   prompt: GeneratedPrompt;
@@ -150,7 +151,7 @@ export function PromptGenerator({
             justify="between" 
             align="center" 
             responsive={true}
-            gap="gap-4"
+            gap={4}
             className="flex-col sm:flex-row"
           >
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -159,7 +160,7 @@ export function PromptGenerator({
             </CardTitle>
             <ResponsiveFlex 
               align="center" 
-              gap="gap-2" 
+              gap={2} 
               responsive={false}
               className="flex-wrap justify-center sm:justify-end"
             >

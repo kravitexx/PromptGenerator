@@ -494,8 +494,9 @@ export function SuccessState({
       )}
     </motion.div>
   );
-}//
- Export advanced loading components for integration
+}
+
+// Export advanced loading components for integration
 export { 
   AdvancedLoading, 
   ShimmerLoader, 

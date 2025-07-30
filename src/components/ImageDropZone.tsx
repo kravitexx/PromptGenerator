@@ -6,10 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { validateImageFile } from '@/lib/validation';
 import { fileToBase64, formatFileSize } from '@/lib/utils';
-import { 
-  Upload, 
-  X, 
-  Image as ImageIcon, 
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
   AlertCircle,
   Loader2
 } from 'lucide-react';
@@ -24,15 +24,15 @@ interface ImageFile {
 interface ImageDropZoneProps {
   onImagesChange?: (images: string[]) => void;
   maxImages?: number;
-  maxFileSize?: number; // in bytes
+  maxFileSize?: number;
   className?: string;
   disabled?: boolean;
 }
 
-export function ImageDropZone({ 
-  onImagesChange, 
-  maxImages = 5, 
-  maxFileSize = 10 * 1024 * 1024, // 10MB
+export function ImageDropZone({
+  onImagesChange,
+  maxImages = 5,
+  maxFileSize = 20 * 1024 * 1024, // 20MB - Gemini 2.5 supports larger images
   className,
   disabled = false
 }: ImageDropZoneProps) {
@@ -40,7 +40,7 @@ export function ImageDropZone({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFiles = useCallback(async (files: FileList | File[]) => {
@@ -73,43 +73,28 @@ export function ImageDropZone({
     }
 
     try {
-      // Process valid files with optimization
+      // Process files - NO OPTIMIZATION, send raw to Gemini API
       const newImages: ImageFile[] = [];
-      
+
       for (const file of validFiles) {
-        // Optimize image if it's large
-        let processedFile = file;
-        if (file.size > 1024 * 1024) { // 1MB threshold
-          try {
-            const { optimizeImage } = await import('@/lib/imageOptimization');
-            const optimized = await optimizeImage(file, {
-              maxWidth: 1024,
-              maxHeight: 1024,
-              quality: 0.8,
-              maxSizeKB: 500
-            });
-            
-            // Convert optimized data URL back to file
-            const response = await fetch(optimized.dataUrl);
-            const blob = await response.blob();
-            processedFile = new File([blob], file.name, { type: 'image/jpeg' });
-            
-            console.log(`Image optimized: ${file.name}`, {
-              originalSize: `${(file.size / 1024).toFixed(1)}KB`,
-              optimizedSize: `${(processedFile.size / 1024).toFixed(1)}KB`,
-              compressionRatio: `${(optimized.compressionRatio * 100).toFixed(1)}%`
-            });
-          } catch (optimizationError) {
-            console.warn('Image optimization failed, using original:', optimizationError);
-          }
+        const fileSizeMB = file.size / 1024 / 1024;
+        console.log(`Processing raw image: ${file.name}`, {
+          size: `${fileSizeMB.toFixed(1)}MB`,
+          type: file.type
+        });
+
+        // Warn about large files
+        if (fileSizeMB > 5) {
+          console.warn(`Large image detected: ${file.name} (${fileSizeMB.toFixed(1)}MB). This may cause performance issues.`);
         }
-        
-        const base64 = await fileToBase64(processedFile);
-        const preview = URL.createObjectURL(processedFile);
-        
+
+        // Convert to base64 without any compression or optimization
+        const base64 = await fileToBase64(file);
+        const preview = URL.createObjectURL(file);
+
         newImages.push({
           id: crypto.randomUUID(),
-          file: processedFile,
+          file: file,
           base64,
           preview,
         });
@@ -117,7 +102,7 @@ export function ImageDropZone({
 
       const updatedImages = [...images, ...newImages];
       setImages(updatedImages);
-      
+
       // Notify parent component
       if (onImagesChange) {
         onImagesChange(updatedImages.map(img => img.base64));
@@ -145,7 +130,7 @@ export function ImageDropZone({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     if (disabled) return;
 
     const files = e.dataTransfer.files;
@@ -159,33 +144,30 @@ export function ImageDropZone({
     if (files && files.length > 0) {
       processFiles(files);
     }
-    // Reset input value to allow selecting the same file again
     e.target.value = '';
   }, [processFiles]);
 
   const removeImage = useCallback((imageId: string) => {
     const updatedImages = images.filter(img => {
       if (img.id === imageId) {
-        // Clean up object URL to prevent memory leaks
         URL.revokeObjectURL(img.preview);
         return false;
       }
       return true;
     });
-    
+
     setImages(updatedImages);
-    
+
     if (onImagesChange) {
       onImagesChange(updatedImages.map(img => img.base64));
     }
   }, [images, onImagesChange]);
 
   const clearAllImages = useCallback(() => {
-    // Clean up all object URLs
     images.forEach(img => URL.revokeObjectURL(img.preview));
     setImages([]);
     setError(null);
-    
+
     if (onImagesChange) {
       onImagesChange([]);
     }
@@ -201,11 +183,10 @@ export function ImageDropZone({
     <div className={className}>
       {/* Drop Zone */}
       <Card
-        className={`transition-colors cursor-pointer ${
-          isDragOver 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-dashed border-gray-300 hover:border-gray-400'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`transition-colors cursor-pointer ${isDragOver
+          ? 'border-blue-500 bg-blue-50'
+          : 'border-dashed border-gray-300 hover:border-gray-400'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -287,8 +268,7 @@ export function ImageDropZone({
                     className="w-full h-full object-cover"
                   />
                 </div>
-                
-                {/* Remove button */}
+
                 <Button
                   variant="destructive"
                   size="sm"
@@ -302,7 +282,6 @@ export function ImageDropZone({
                   <X className="h-3 w-3" />
                 </Button>
 
-                {/* File info */}
                 <div className="mt-1 space-y-1">
                   <p className="text-xs font-medium truncate" title={image.file.name}>
                     {image.file.name}
@@ -319,8 +298,9 @@ export function ImageDropZone({
 
       {/* Usage Info */}
       <div className="mt-3 text-xs text-gray-500 space-y-1">
-        <p>• Images will be analyzed to provide feedback on your generated prompts</p>
+        <p>• Images sent raw to AI for best analysis quality</p>
         <p>• Maximum {maxImages} images, up to {formatFileSize(maxFileSize)} each</p>
+        <p>• <strong>Recommended:</strong> Keep images under 5MB for best performance</p>
         <p>• Supported formats: JPEG, PNG, WebP</p>
       </div>
     </div>

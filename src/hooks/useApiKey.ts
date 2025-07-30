@@ -35,14 +35,18 @@ export function useApiKey() {
 
       // Validate the stored key
       try {
+        console.log('Validating stored API key...');
         const isValid = await testGeminiApiKey(storedKey);
+        console.log('Stored API key validation result:', isValid);
+        
         setState({
           apiKey: storedKey,
           isValid,
           isLoading: false,
           error: isValid ? null : 'Stored API key is no longer valid',
         });
-      } catch {
+      } catch (error) {
+        console.error('Error validating stored API key:', error);
         setState({
           apiKey: storedKey,
           isValid: false,
@@ -161,5 +165,14 @@ export function useApiKey() {
     clearApiKey,
     refreshValidation,
     hasValidKey: state.isValid && Boolean(state.apiKey),
+    // Debug info for troubleshooting
+    debugInfo: {
+      apiKeyPresent: Boolean(state.apiKey),
+      keyLength: state.apiKey?.length || 0,
+      startsWithAIzaSy: state.apiKey?.startsWith('AIzaSy') || false,
+      isValid: state.isValid,
+      hasError: Boolean(state.error),
+      errorMessage: state.error,
+    }
   };
 }

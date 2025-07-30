@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
+import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DataCleaner } from '@/components/DataCleaner';
 import { PageTransition } from '@/components/PageTransition';
@@ -23,6 +24,16 @@ const geistMono = Geist_Mono({
   display: 'swap',
   preload: false, // Only preload if needed
 });
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
+};
 
 export const metadata: Metadata = {
   title: "AI Prompt Generator",
@@ -55,15 +66,7 @@ export const metadata: Metadata = {
     title: 'AI Prompt Generator',
     description: 'Create perfect prompts for AI image generation',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
+
 };
 
 export default function RootLayout({
@@ -87,11 +90,11 @@ export default function RootLayout({
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="preconnect" href="https://api.openai.com" />
           <link rel="preconnect" href="https://generativelanguage.googleapis.com" />
-          
+
           {/* DNS prefetch for performance */}
           <link rel="dns-prefetch" href="https://clerk.com" />
           <link rel="dns-prefetch" href="https://www.googleapis.com" />
-          
+
           {/* Preload critical resources */}
           <link
             rel="preload"
@@ -100,53 +103,28 @@ export default function RootLayout({
             type="font/woff2"
             crossOrigin="anonymous"
           />
-          
+
           {/* Performance hints */}
           <meta name="format-detection" content="telephone=no" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-          
+
           {/* Security headers */}
           <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
           <meta httpEquiv="X-Frame-Options" content="DENY" />
           <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-white font-sans`}
           suppressHydrationWarning
         >
           <ErrorBoundary>
             <DataCleaner />
-            {/* Skip to main content for accessibility */}
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded-md z-50"
-            >
-              Skip to main content
-            </a>
-            
-            <div id="main-content" className="flex flex-col min-h-screen">
-              {/* Responsive Header */}
-              <ResponsiveHeader />
-              
-              {/* Main Content */}
-              <main className="flex-1">
-                <RouteTransition>
-                  <PageTransition>
-                    {children}
-                  </PageTransition>
-                </RouteTransition>
-              </main>
-              
-              {/* Responsive Footer */}
-              <ResponsiveFooter />
-              
-              {/* Floating API Key Manager */}
-              <FloatingApiKeyTrigger position="top-right" />
-            </div>
+            {children}
           </ErrorBoundary>
-          
+          <Toaster />
+
           {/* Performance monitoring and optimization script */}
           <script
             dangerouslySetInnerHTML={{
@@ -177,7 +155,7 @@ export default function RootLayout({
                   // Initialize performance optimizations
                   window.addEventListener('load', () => {
                     // Remove debug code in production
-                    if ('${process.env.NODE_ENV}' === 'production') {
+                    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
                       console.log = () => {};
                       console.debug = () => {};
                       console.info = () => {};

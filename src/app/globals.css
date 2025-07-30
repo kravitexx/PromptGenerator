@@ -215,7 +215,12 @@
   }
   
   .glass-card {
-    @apply glass rounded-xl;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 0.75rem;
   }
   
   /* Modern Gradients */
@@ -252,9 +257,7 @@
     animation: pulse-glow 2s ease-in-out infinite;
   }
   
-  .animate-shimmer {
-    animation: shimmer 2s infinite;
-  }
+
   
   /* Background Pattern */
   .bg-grid-pattern {
@@ -411,7 +414,7 @@
 @layer components {
   /* Optimized button styles */
   .btn-optimized {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible-ring disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
     contain: layout style paint;
   }
   
@@ -423,7 +426,7 @@
   
   /* Optimized input styles */
   .input-optimized {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible-ring disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
     contain: layout style;
   }
   
@@ -438,8 +441,9 @@
   }
   
   .skeleton-shimmer::after {
-    @apply absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
     content: '';
+    animation: shimmer 2s infinite;
   }
 }
 

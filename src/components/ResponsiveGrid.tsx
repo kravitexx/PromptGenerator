@@ -219,3 +219,40 @@ export function ResponsiveCardGrid({
     </div>
   );
 }
+
+// ResponsiveFlex component for flexible layouts
+interface ResponsiveFlexProps {
+  children: React.ReactNode;
+  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
+  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+  wrap?: boolean;
+  gap?: number;
+  className?: string;
+}
+
+export function ResponsiveFlex({
+  children,
+  direction = 'row',
+  justify = 'start',
+  align = 'start',
+  wrap = false,
+  gap = 4,
+  className = ''
+}: ResponsiveFlexProps) {
+  const flexClasses = [
+    'flex',
+    `flex-${direction}`,
+    `justify-${justify}`,
+    `items-${align}`,
+    wrap ? 'flex-wrap' : 'flex-nowrap',
+    `gap-${gap}`,
+    className
+  ].filter(Boolean).join(' ');
+
+  return (
+    <div className={flexClasses}>
+      {children}
+    </div>
+  );
+}

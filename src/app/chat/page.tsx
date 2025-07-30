@@ -1,20 +1,19 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ChatWindow } from '@/components/ChatWindow'
+import { SimpleChatWindow } from '@/components/SimpleChatWindow'
 import { ApiKeyGuard } from '@/components/ApiKeyGuard'
-import { ModernSidebar } from '@/components/ModernSidebar'
-import { StaggerContainer, StaggerItem, ScrollTriggeredStagger } from '@/components/PageTransition'
-import { ResponsiveContainer } from '@/components/ResponsiveGrid'
 import { GeneratedPrompt } from '@/types'
 import { useState } from 'react'
+import { Menu, Plus, MessageSquare } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function ChatPage() {
-  const [currentPrompt, setCurrentPrompt] = useState<GeneratedPrompt | null>(null);
+  const [currentPrompt] = useState<GeneratedPrompt | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handlePromptGenerated = (prompt: GeneratedPrompt) => {
-    setCurrentPrompt(prompt);
+    // Handle prompt generation if needed
+    console.log('Prompt generated:', prompt);
   };
 
   const toggleSidebar = () => {
@@ -22,85 +21,140 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Main Container with Enhanced Animations */}
-      <StaggerContainer 
-        delay={0.1}
-        staggerDelay={0.12}
-        direction="normal"
-        className="relative min-h-screen"
-      >
-        {/* Animated Background Pattern */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 0.05, scale: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="absolute inset-0 bg-grid-pattern pointer-events-none" 
-        />
-        
-        <ResponsiveContainer maxWidth="full" padding={true} className="py-4 sm:py-6 lg:py-8">
-          <ApiKeyGuard>
-            {/* Enhanced Grid Layout with Stagger */}
-            <ScrollTriggeredStagger 
-              threshold={0.2}
-              rootMargin="-20px"
-              className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6 h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)]"
-            >
-              {/* Main Chat Interface with Enhanced Animation */}
-              <StaggerItem 
-                className="xl:col-span-3"
-                direction="left"
-                intensity="normal"
-              >
-                <motion.div 
-                  className="glass-card h-full overflow-hidden hover-glow"
-                  whileHover={{ 
-                    scale: 1.01,
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-                  }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                >
-                  <ChatWindow 
-                    onPromptGenerated={handlePromptGenerated}
-                    className="h-full"
-                    showPromptGenerator={true}
-                  />
-                </motion.div>
-              </StaggerItem>
-              
-              {/* Desktop Sidebar with Enhanced Animation */}
-              <div className="hidden xl:block xl:col-span-1">
-                <StaggerItem
-                  direction="right"
-                  intensity="normal"
-                  delay={0.2}
-                >
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.02,
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    <ModernSidebar
-                      currentPrompt={currentPrompt}
-                      isOpen={true}
-                      onToggle={toggleSidebar}
-                    />
-                  </motion.div>
-                </StaggerItem>
-              </div>
-            </ScrollTriggeredStagger>
-          </ApiKeyGuard>
-        </ResponsiveContainer>
-      </StaggerContainer>
+    <ApiKeyGuard>
+      <div className="h-screen flex bg-white">
+        {/* Sidebar - Desktop */}
+        <div className="hidden lg:flex lg:flex-col lg:w-64 lg:bg-gray-900">
+          <div className="flex flex-col h-full">
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h2 className="text-white font-semibold">Prompt Generator</h2>
+            </div>
 
-      {/* Mobile Sidebar */}
-      <ModernSidebar
-        currentPrompt={currentPrompt}
-        isOpen={sidebarOpen}
-        onToggle={toggleSidebar}
-        className="xl:hidden"
-      />
-    </div>
+            {/* New Chat Button */}
+            <div className="p-4">
+              <Button className="w-full bg-gray-800 hover:bg-gray-700 text-white border-gray-600">
+                <Plus className="h-4 w-4 mr-2" />
+                New chat
+              </Button>
+            </div>
+
+            {/* Chat History */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                <div className="text-gray-400 text-xs uppercase tracking-wide mb-2">
+                  Recent
+                </div>
+                {/* Sample chat items */}
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Generate fantasy landscape prompt
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Portrait photography style
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Abstract art composition
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar - Mobile */}
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transition-transform duration-300 ease-in-out lg:hidden`}>
+          <div className="flex flex-col h-full">
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h2 className="text-white font-semibold">Prompt Generator</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="text-white hover:bg-gray-800"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* New Chat Button */}
+            <div className="p-4">
+              <Button className="w-full bg-gray-800 hover:bg-gray-700 text-white border-gray-600">
+                <Plus className="h-4 w-4 mr-2" />
+                New chat
+              </Button>
+            </div>
+
+            {/* Chat History */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                <div className="text-gray-400 text-xs uppercase tracking-wide mb-2">
+                  Recent
+                </div>
+                {/* Sample chat items */}
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Generate fantasy landscape prompt
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Portrait photography style
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm truncate">
+                    Abstract art composition
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+            <h1 className="font-semibold">Prompt Generator</h1>
+            <div></div>
+          </div>
+
+          {/* Chat Area */}
+          <div className="flex-1 overflow-hidden">
+            <SimpleChatWindow 
+              onPromptGenerated={handlePromptGenerated}
+              className="h-full"
+            />
+          </div>
+        </div>
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={toggleSidebar}
+          />
+        )}
+      </div>
+    </ApiKeyGuard>
   )
 }

@@ -84,7 +84,7 @@ export function validateImageFile(file: File): {
   isValid: boolean;
   error?: string;
 } {
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 20 * 1024 * 1024; // 20MB - Gemini 2.5 supports larger images
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   
   if (!allowedTypes.includes(file.type)) {
@@ -97,7 +97,7 @@ export function validateImageFile(file: File): {
   if (file.size > maxSize) {
     return { 
       isValid: false, 
-      error: 'File size too large. Please use images smaller than 10MB.' 
+      error: 'File size too large. Please use images smaller than 20MB.' 
     };
   }
   
