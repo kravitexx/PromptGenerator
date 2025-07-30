@@ -1,16 +1,18 @@
 # AI Prompt Generator
 
-A Next.js 14 chatbot application that helps users craft high-quality text-to-image prompts for various AI image generation models. The system provides a universal 7-slot prompt scaffold, model-specific templates, and iterative refinement capabilities through AI-powered suggestions and image feedback loops.
+A Next.js 14 chatbot application that helps users craft high-quality text-to-image prompts for various AI image generation models. The system provides a universal 7-slot prompt scaffold, model-specific templates, and iterative refinement capabilities through AI-powered suggestions and image analysis.
 
 ## ✨ Features
 
-- **Universal 7-Slot Scaffold**: Structured prompt generation using Subject, Context, Style, Colors, Lighting, Atmosphere, and Qualifiers
+- **Universal 7-Slot Scaffold**: Interactive structured prompt generation using Subject, Context, Style, Composition, Lighting, Atmosphere, and Quality
 - **Multi-Model Support**: Optimized templates for Stable Diffusion 3.5, Midjourney v6, DALL·E 3, Imagen 3, and Flux v9
-- **AI-Powered Refinement**: Clarifying questions and suggestions powered by Google Gemini 1.5 Pro
-- **Image Feedback Analysis**: Upload generated images for AI analysis and prompt improvement suggestions
+- **AI-Powered Refinement**: Clarifying questions and suggestions powered by Google Gemini 2.5 Pro/Flash
+- **Image Analysis**: Upload images (with or without text) for AI-powered prompt generation and feedback
 - **Custom Format Wizard**: Create and validate custom prompt templates for specialized models
-- **Google Drive Integration**: Persist chat history and custom formats across sessions
-- **Secure Authentication**: Google SSO via Clerk with optional Drive permissions
+- **Local Storage Persistence**: Chat history and custom formats saved locally for instant access
+- **Interactive Scaffold Display**: Visual progress tracking and inline editing of prompt components
+- **Flexible Input**: Send text only, images only, or combine both for enhanced prompt generation
+- **Secure Authentication**: Google SSO via Clerk for seamless user experience
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## 🚀 Quick Start
@@ -18,9 +20,8 @@ A Next.js 14 chatbot application that helps users craft high-quality text-to-ima
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Google Cloud Project with Gemini API access
+- Google AI Studio API key (Gemini)
 - Clerk account for authentication
-- (Optional) Google Drive API credentials for persistence
 
 ### Installation
 
@@ -50,6 +51,26 @@ A Next.js 14 chatbot application that helps users craft high-quality text-to-ima
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+## 💾 Data Storage
+
+The application uses **localStorage** for data persistence, providing:
+- **Instant Access**: No network requests for saved data
+- **Privacy**: All data stays on your device
+- **Automatic Management**: Handles storage quota limits gracefully
+- **Persistent Sessions**: Chat history and custom formats saved locally
+
+### What's Stored Locally
+- Chat conversation history (without large images to save space)
+- Custom prompt format templates
+- User preferences and settings
+- API key (securely in session storage)
+
+### Storage Management
+- Automatic cleanup when storage quota is exceeded
+- Keeps most recent conversations and formats
+- Images are not stored in chat history to prevent quota issues
+- Manual clear option available in settings
+
 ## 🔧 Environment Variables
 
 Create a `.env.local` file in the root directory with the following variables:
@@ -69,19 +90,10 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/chat
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Optional Variables (for Google Drive Integration)
-
-```env
-# Google Drive API (Optional - for data persistence)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-```
-
 ### User-Provided Variables
 
 The following are provided by users through the application interface:
-- **Gemini API Key**: Users enter their own Google AI Studio API key
-- **Google Drive Access**: Users grant permissions during authentication
+- **Gemini API Key**: Users enter their own Google AI Studio API key for prompt generation
 
 ## 📋 Setup Instructions
 
@@ -104,16 +116,7 @@ Users need to obtain their own Gemini API key:
 2. Create a new API key
 3. Enter the key in the application when prompted
 
-### 3. Google Drive Integration (Optional)
-
-For data persistence across sessions:
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google Drive API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URIs for your domain
-6. Add the client ID and secret to your environment variables
+> **Note**: The application uses Gemini 2.5 Pro for complex prompts and Gemini 2.5 Flash for faster responses
 
 ## 🏗️ Project Structure
 
@@ -122,21 +125,28 @@ prompt-generator/
 ├── src/
 │   ├── app/                    # Next.js 14 App Router
 │   │   ├── api/               # API routes
-│   │   │   ├── gemini/        # Gemini API integration
-│   │   │   └── drive/         # Google Drive API
+│   │   │   └── gemini/        # Gemini API integration
 │   │   ├── chat/              # Main chat interface
 │   │   ├── sign-in/           # Authentication pages
 │   │   └── layout.tsx         # Root layout
 │   ├── components/            # React components
 │   │   ├── ui/                # shadcn/ui components
-│   │   ├── chat/              # Chat-specific components
-│   │   └── forms/             # Form components
+│   │   ├── SimpleChatWindow.tsx    # Main chat interface
+│   │   ├── PromptSwitcher.tsx      # Model template switcher
+│   │   ├── ModernScaffoldDisplay.tsx # Interactive scaffold visualization
+│   │   ├── ClarifyModal.tsx        # Clarifying questions interface
+│   │   ├── ImageDropZone.tsx       # Image upload component
+│   │   └── FormatWizard.tsx        # Custom format creation
 │   ├── lib/                   # Utility functions
 │   │   ├── gemini.ts          # Gemini API client
-│   │   ├── drive.ts           # Google Drive client
 │   │   ├── promptBuilder.ts   # Prompt generation logic
-│   │   └── modelTemplates.ts  # Model-specific templates
+│   │   ├── modelTemplates.ts  # Model-specific templates
+│   │   ├── scaffold.ts        # 7-slot scaffold utilities
+│   │   ├── clarifyingQuestions.ts # Question database
+│   │   └── customFormats.ts   # Custom format management
 │   ├── hooks/                 # Custom React hooks
+│   │   ├── useLocalPersistence.ts # Local storage management
+│   │   └── useApiKey.ts       # API key management
 │   ├── types/                 # TypeScript type definitions
 │   └── styles/                # Global styles
 ├── public/                    # Static assets
@@ -208,36 +218,60 @@ npm run test -- promptBuilder.test.ts
 - **Production**: Uses Vercel environment variables with production URLs
 - **Preview**: Uses Vercel preview environment for testing
 
+## 🎯 Key Components
+
+### Interactive Scaffold System
+The application uses a universal 7-slot scaffold structure:
+- **S** - Subject: Main focus of the image
+- **C** - Context: Setting and environment
+- **St** - Style: Art style and medium
+- **Co** - Composition: Camera angle and framing
+- **L** - Lighting: Lighting conditions and mood
+- **A** - Atmosphere: Emotional tone and feeling
+- **Q** - Quality: Technical specifications and rendering
+
+### Model Template Support
+Pre-configured templates for popular AI models:
+- **Stable Diffusion 3.5**: Comma-separated format with negative prompts
+- **Midjourney v6**: Parameter-based format with aspect ratios
+- **DALL·E 3**: Natural language descriptive format
+- **Imagen 3**: JSON-structured format
+- **Flux v9**: Pipe-separated format
+
+### Intelligent Input Processing
+- **Text Only**: Generate enhanced prompts from descriptions
+- **Image Only**: Analyze images to create detailed prompts
+- **Combined**: Use images with additional text instructions
+- **Flexible**: No mandatory text input when uploading images
+
 ## 📖 Usage Guide
 
 ### Basic Workflow
 
-1. **Sign In**: Authenticate with Google (recommended for Drive integration)
+1. **Sign In**: Authenticate with Google for secure access
 2. **API Key**: Enter your Gemini API key when prompted
-3. **Chat**: Describe what you want to create in natural language
+3. **Input**: Send text, images, or both to generate prompts
 4. **Generate**: The system creates a structured prompt using the 7-slot scaffold
-5. **Refine**: Answer clarifying questions to improve the prompt
-6. **Format**: Switch between different model templates (SD, MJ, DALL·E, etc.)
-7. **Analyze**: Upload generated images for feedback and improvement suggestions
+5. **Visualize**: View interactive scaffold breakdown with progress tracking
+6. **Refine**: Answer clarifying questions to improve the prompt
+7. **Format**: Switch between different model templates (SD, MJ, DALL·E, etc.)
+8. **Customize**: Create custom formats for specialized models
 
 ### Advanced Features
 
-- **Custom Formats**: Create templates for specialized or new models
-- **Image Analysis**: Get detailed feedback on generated images
-- **Drive Sync**: Access your prompts and formats across devices
-- **Batch Processing**: Generate multiple variations of prompts
+- **Image-Only Generation**: Upload images without text to get detailed prompts
+- **Combined Analysis**: Upload images with additional text instructions
+- **Interactive Scaffold Editing**: Edit individual scaffold components inline
+- **Custom Format Creation**: Build templates for new or specialized models
+- **Local Persistence**: All data saved locally for instant access
+- **Quality Analysis**: Get scoring and recommendations for prompt completeness
 
 ## 🔧 API Reference
 
 ### Gemini API Endpoints
 
-- `POST /api/gemini/generate` - Generate prompts from user input
-- `POST /api/gemini/analyze` - Analyze images and provide feedback
-
-### Google Drive API Endpoints
-
-- `POST /api/drive/save` - Save chat history and custom formats
-- `GET /api/drive/load` - Load user data from Drive
+- `POST /api/gemini/generate` - Generate prompts from text and/or images
+- `POST /api/gemini/analyze` - Analyze images and provide feedback (available for future use)
 
 See the included Postman collection for detailed API documentation and examples.
 
@@ -271,10 +305,10 @@ See the included Postman collection for detailed API documentation and examples.
 - Check redirect URLs match your environment
 - Ensure Google OAuth is properly configured
 
-**Drive integration not working**
-- Verify Google Drive API is enabled
-- Check OAuth credentials and redirect URIs
-- Ensure user has granted Drive permissions
+**Large image upload issues**
+- Keep images under 5MB for best performance
+- Supported formats: JPEG, PNG, WebP
+- Images are processed raw for best AI analysis quality
 
 **Build/deployment errors**
 - Check all environment variables are set
@@ -295,9 +329,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Next.js](https://nextjs.org/) - React framework
 - [Clerk](https://clerk.com/) - Authentication platform
-- [Google Gemini](https://ai.google.dev/) - AI model for prompt generation
+- [Google Gemini](https://ai.google.dev/) - AI model for prompt generation and image analysis
 - [shadcn/ui](https://ui.shadcn.com/) - UI component library
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [Framer Motion](https://www.framer.com/motion/) - Animation library
 - [Vercel](https://vercel.com/) - Deployment platform
 
 ---
